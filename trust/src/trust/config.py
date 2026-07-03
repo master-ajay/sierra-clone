@@ -8,7 +8,6 @@ class Settings(BaseSettings):
     trust_port: int = 8500
     trust_rate_limit_rpm: int = 60
     trust_injection_block: bool = True
-    trust_ui_port: int = 8501
 
     model_config = {"env_file": ".env", "extra": "ignore"}
 

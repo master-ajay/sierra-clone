@@ -15,7 +15,7 @@ pythonpath = ["src"]
 testpaths = ["tests"]
 
 [tool.ruff]
-line-length = 130
+line-length = 200
 
 [tool.ruff.lint]
 select = ["E", "F", "I"]

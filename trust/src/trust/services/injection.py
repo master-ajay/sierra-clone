@@ -1,53 +1,25 @@
 import re
+from trust.models.check import Flag
 
-INSTRUCTION_OVERRIDE_RE = re.compile(
-    r"ignore (all )?(previous|above|prior) instructions?"
-    r"|you are now"
-    r"|new (system )?prompt"
-    r"|forget everything"
-    r"|act as (if )?"
-    r"|your (new )?instructions? (are|is)"
-    r"|disregard (your )?(previous|training)",
-    re.IGNORECASE,
-)
+_PATTERNS = [
+    re.compile(r"ignore\s+(all\s+)?(previous|above|prior)\s+instructions?", re.I),
+    re.compile(r"you\s+are\s+now\b", re.I),
+    re.compile(r"new\s+(system\s+)?prompt", re.I),
+    re.compile(r"forget\s+everything", re.I),
+    re.compile(r"act\s+as(\s+if)?", re.I),
+    re.compile(r"your\s+(new\s+)?instructions?\s+(are|is)\b", re.I),
+    re.compile(r"disregard\s+(your\s+)?(previous|training)", re.I),
+    re.compile(r"\n(system|assistant):\s", re.I),
+]
 
-ROLE_INJECTION_RE = re.compile(r"\n(system|assistant):\s", re.IGNORECASE)
-
-IMPERATIVE_VERBS = ("tell", "ignore", "act", "pretend", "respond", "repeat", "output")
-IMPERATIVE_VERB_RE = re.compile(r"\b(" + "|".join(IMPERATIVE_VERBS) + r")\b", re.IGNORECASE)
-
-DENSITY_LENGTH_THRESHOLD = 500
-DENSITY_VERB_COUNT_THRESHOLD = 3
+_IMPERATIVE_VERBS = re.compile(r"\b(tell|ignore|act|pretend|respond|repeat|output|forget|disregard)\b", re.I)
 
 
-def detect_injection(text: str) -> list[dict]:
-    if INSTRUCTION_OVERRIDE_RE.search(text):
-        return [
-            {
-                "type": "prompt_injection",
-                "detail": "instruction-override pattern detected",
-                "severity": "block",
-            }
-        ]
-
-    if ROLE_INJECTION_RE.search(text):
-        return [
-            {
-                "type": "prompt_injection",
-                "detail": "role-injection pattern detected",
-                "severity": "block",
-            }
-        ]
-
-    if len(text) > DENSITY_LENGTH_THRESHOLD:
-        verb_count = len(IMPERATIVE_VERB_RE.findall(text))
-        if verb_count > DENSITY_VERB_COUNT_THRESHOLD:
-            return [
-                {
-                    "type": "prompt_injection",
-                    "detail": "excessive instruction density detected",
-                    "severity": "block",
-                }
-            ]
-
+def scan_injection(text: str) -> list[Flag]:
+    for pattern in _PATTERNS:
+        if pattern.search(text):
+            return [Flag(type="prompt_injection", detail="instruction-override pattern detected", severity="block")]
+    # Density heuristic: long message with many imperative verbs
+    if len(text) > 500 and len(_IMPERATIVE_VERBS.findall(text)) > 3:
+        return [Flag(type="prompt_injection", detail="high imperative verb density in long message", severity="block")]
     return []

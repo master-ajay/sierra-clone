@@ -1,30 +1,28 @@
-import time
-from collections import defaultdict, deque
-from collections.abc import Callable
+from collections import deque
+from datetime import datetime, timezone
+from trust.models.check import Flag
 
-WINDOW_SECONDS = 60
+_windows: dict[str, deque] = {}
 
 
-class RateLimiter:
-    def __init__(self, rpm: int, now_fn: Callable[[], float] = time.monotonic) -> None:
-        self.rpm = rpm
-        self._now_fn = now_fn
-        self._windows: dict[str, deque] = defaultdict(deque)
+def check_rate_limit(channel_id: str, rpm: int) -> list[Flag]:
+    now = datetime.now(timezone.utc).timestamp()
+    window = _windows.setdefault(channel_id, deque())
+    # Remove entries older than 60 seconds
+    while window and now - window[0] > 60:
+        window.popleft()
+    if len(window) >= rpm:
+        return [Flag(type="rate_limit", detail=f"exceeded {rpm} requests/minute", severity="block")]
+    window.append(now)
+    return []
 
-    def _evict_expired(self, channel_id: str) -> None:
-        window = self._windows[channel_id]
-        cutoff = self._now_fn() - WINDOW_SECONDS
-        while window and window[0] <= cutoff:
-            window.popleft()
 
-    def allow(self, channel_id: str) -> bool:
-        self._evict_expired(channel_id)
-        window = self._windows[channel_id]
-        if len(window) >= self.rpm:
-            return False
-        window.append(self._now_fn())
-        return True
+def get_window_state(channel_id: str, rpm: int) -> dict:
+    now = datetime.now(timezone.utc).timestamp()
+    window = _windows.get(channel_id, deque())
+    count = sum(1 for t in window if now - t <= 60)
+    return {"channel_id": channel_id, "current_count": count, "limit": rpm, "window_seconds": 60}
 
-    def get_state(self, channel_id: str) -> dict:
-        self._evict_expired(channel_id)
-        return {"count": len(self._windows[channel_id]), "limit": self.rpm}
+
+def reset_for_testing(channel_id: str) -> None:
+    _windows.pop(channel_id, None)

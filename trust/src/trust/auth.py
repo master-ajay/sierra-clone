@@ -1,5 +1,4 @@
 from fastapi import Depends, HTTPException, Request
-
 from trust.config import Settings, get_settings
 
 

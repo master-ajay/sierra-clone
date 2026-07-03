@@ -1,5 +1,4 @@
 from fastapi import APIRouter, Depends
-
 from trust.auth import require_api_key
 from trust.config import Settings, get_settings
 from trust.database import get_connection
@@ -14,13 +13,14 @@ def health(settings: Settings = Depends(get_settings)) -> dict:
         conn = get_connection(settings.trust_db_path)
         conn.execute("SELECT 1")
         conn.close()
-        db_status = "connected"
+        return {"status": "ok", "database": "connected"}
     except Exception:
-        db_status = "error"
-    return {"status": "ok", "database": db_status}
+        return {"status": "ok", "database": "error"}
 
 
 @router.get("/v1/stats")
 def stats(settings: Settings = Depends(get_settings)) -> dict:
     conn = get_connection(settings.trust_db_path)
-    return get_stats(conn)
+    result = get_stats(conn)
+    conn.close()
+    return result
