@@ -9,7 +9,7 @@ from agent_runtime.models import Chunk
 
 def _fake_client(response_json: dict):
     client = MagicMock()
-    client.models.generate_content.return_value = MagicMock(text=json.dumps(response_json))
+    client.chat.completions.create.return_value.choices[0].message.content = json.dumps(response_json)
     return client
 
 
@@ -30,11 +30,11 @@ def test_generate_returns_answer_with_valid_citation():
     assert isinstance(result, GenerationResult)
     assert result.citations == ["shipping.md::0"]
     assert result.citations[0] in {c.id for c in chunks}
-    client.models.generate_content.assert_called_once()
+    client.chat.completions.create.assert_called_once()
 
 
 def test_generate_without_client_or_api_key_raises_clear_error(monkeypatch):
-    monkeypatch.delenv("GEMINI_API_KEY", raising=False)
+    monkeypatch.delenv("GROQ_API_KEY", raising=False)
 
-    with pytest.raises(RuntimeError, match="GEMINI_API_KEY"):
+    with pytest.raises(RuntimeError, match="GROQ_API_KEY"):
         generate("anything", [], client=None)

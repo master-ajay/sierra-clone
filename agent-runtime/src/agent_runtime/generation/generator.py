@@ -1,12 +1,11 @@
 import os
 
-from google import genai
-from google.genai import types
+from openai import OpenAI
 from pydantic import BaseModel
 
 from agent_runtime.models import Chunk
 
-MODEL = os.environ.get("GEMINI_MODEL", "gemini-2.0-flash")
+MODEL = os.environ.get("GROQ_MODEL", "openai/gpt-oss-120b")
 
 SYSTEM_PROMPT = (
     "You are a customer support agent. Answer the user's question using ONLY "
@@ -14,7 +13,8 @@ SYSTEM_PROMPT = (
     "grounded in that context. If the context does not contain enough "
     "information to answer, set answer to \"I don't know based on the "
     "available information.\" and citations to an empty list; do not guess "
-    "or use outside knowledge. Cite the id of every chunk you drew on."
+    "or use outside knowledge. Cite the id of every chunk you drew on. "
+    'Respond with JSON in this exact format: {"answer": "...", "citations": ["..."]}'
 )
 
 
@@ -32,20 +32,19 @@ def generate(query: str, chunks: list[Chunk], client=None) -> GenerationResult:
     context = build_context_block(chunks)
     prompt = f"Context:\n{context}\n\nQuestion: {query}"
 
-    response = client.models.generate_content(
+    response = client.chat.completions.create(
         model=MODEL,
-        contents=prompt,
-        config=types.GenerateContentConfig(
-            system_instruction=SYSTEM_PROMPT,
-            response_mime_type="application/json",
-            response_schema=GenerationResult,
-        ),
+        messages=[
+            {"role": "system", "content": SYSTEM_PROMPT},
+            {"role": "user", "content": prompt},
+        ],
+        response_format={"type": "json_object"},
     )
-    return GenerationResult.model_validate_json(response.text)
+    return GenerationResult.model_validate_json(response.choices[0].message.content)
 
 
 def _default_client():
-    api_key = os.environ.get("GEMINI_API_KEY")
+    api_key = os.environ.get("GROQ_API_KEY")
     if not api_key:
-        raise RuntimeError("GEMINI_API_KEY is not set. Add it to .env.")
-    return genai.Client(api_key=api_key)
+        raise RuntimeError("GROQ_API_KEY is not set. Add it to .env.")
+    return OpenAI(api_key=api_key, base_url="https://api.groq.com/openai/v1")

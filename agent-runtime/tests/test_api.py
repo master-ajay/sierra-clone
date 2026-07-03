@@ -74,20 +74,20 @@ def test_query_stream_endpoint_emits_content_then_done_event():
 
 def test_query_endpoint_returns_clean_json_error_on_runtime_error():
     agent = MagicMock()
-    agent.query.side_effect = RuntimeError("GEMINI_API_KEY is not set. Add it to .env.")
+    agent.query.side_effect = RuntimeError("GROQ_API_KEY is not set. Add it to .env.")
     app.dependency_overrides[get_agent] = lambda: agent
     client = TestClient(app)
 
     res = client.post("/v1/query", json={"query": "hi"})
 
     assert res.status_code == 500
-    assert res.json() == {"error": "GEMINI_API_KEY is not set. Add it to .env."}
+    assert res.json() == {"error": "GROQ_API_KEY is not set. Add it to .env."}
     app.dependency_overrides.clear()
 
 
 def test_query_stream_endpoint_emits_error_event_on_runtime_error():
     agent = MagicMock()
-    agent.query.side_effect = RuntimeError("GEMINI_API_KEY is not set. Add it to .env.")
+    agent.query.side_effect = RuntimeError("GROQ_API_KEY is not set. Add it to .env.")
     app.dependency_overrides[get_agent] = lambda: agent
     client = TestClient(app)
 
@@ -98,5 +98,5 @@ def test_query_stream_endpoint_emits_error_event_on_runtime_error():
 
     assert len(events) == 1
     assert events[0]["type"] == "error"
-    assert "GEMINI_API_KEY" in events[0]["message"]
+    assert "GROQ_API_KEY" in events[0]["message"]
     app.dependency_overrides.clear()

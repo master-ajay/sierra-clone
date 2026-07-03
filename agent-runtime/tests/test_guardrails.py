@@ -9,7 +9,7 @@ CHUNKS = [Chunk(id="a::0", text="We ship within 2 business days.", source="a.md"
 
 def _fake_client(score: float):
     client = MagicMock()
-    client.models.generate_content.return_value = MagicMock(text=json.dumps({"score": score}))
+    client.chat.completions.create.return_value.choices[0].message.content = json.dumps({"score": score})
     return client
 
 

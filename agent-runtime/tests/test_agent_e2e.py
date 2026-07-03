@@ -20,9 +20,9 @@ def kb_dir():
 
 def _client_with_responses(gen_json: dict, faith_json: dict):
     client = MagicMock()
-    client.models.generate_content.side_effect = [
-        MagicMock(text=json.dumps(gen_json)),
-        MagicMock(text=json.dumps(faith_json)),
+    client.chat.completions.create.side_effect = [
+        MagicMock(choices=[MagicMock(message=MagicMock(content=json.dumps(gen_json)))]),
+        MagicMock(choices=[MagicMock(message=MagicMock(content=json.dumps(faith_json)))]),
     ]
     return client
 
