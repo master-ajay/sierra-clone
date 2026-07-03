@@ -1,11 +1,17 @@
-# Agent Studio
+# Sierra Platform Build
 
-Sierra-inspired build: working software for what Sierra.ai's "Agent Studio"
-product does (define an agent's instructions/knowledge/tools, test it in a
-chat playground), not a clone of Sierra's marketing site. Product 1 of a
-planned 7-area build; see `docs/superpowers/specs/2026-07-03-agent-studio-design.md`
-for the full spec and `docs/superpowers/plans/2026-07-03-agent-studio.md` for
-the task-by-task implementation plan.
+Sierra-inspired build: working software for what Sierra.ai's product suite
+does — not a clone of their marketing site. 7-area build (Agent Studio, ADP,
+Channels, Explorer, Ghostwriter, Insights, Trust & Reliability) on top of a
+shared Agent Runtime & SDK.
+
+**Cross-product process:** `docs/superpowers/DEVELOPMENT-PLAYBOOK.md` — the
+single source of truth for how every product gets built (pipeline, roles,
+quality bar, consistency standards). Read it once; apply it to every product.
+
+**Current products:**
+- Agent Runtime & SDK — `docs/superpowers/specs/2026-07-04-agent-runtime-design.md` / `docs/superpowers/plans/2026-07-04-agent-runtime.md`
+- Agent Studio (Product 1/7) — `docs/superpowers/specs/2026-07-03-agent-studio-design.md` / `docs/superpowers/plans/2026-07-03-agent-studio.md`
 
 ## Stack
 
