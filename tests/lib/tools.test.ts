@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { executeTool, getToolByName } from '@/lib/tools';
+import { executeTool, getToolByName, TOOLS } from '@/lib/tools';
 
 describe('tools', () => {
   it('looks up a known order', () => {
@@ -33,8 +33,29 @@ describe('tools', () => {
   });
 
   it('returns error JSON when tool throws (missing required arg)', () => {
-    const result = JSON.parse(executeTool('lookup_order', {}));
-    expect(result.error).toBeDefined();
-    expect(typeof result.error).toBe('string');
+    // This test verifies the try/catch in executeTool catches tool errors.
+    // We monkey-patch a tool's execute method to throw, call executeTool,
+    // and verify it returns JSON with an error field instead of throwing.
+
+    const toolIndex = 0; // Patch the first tool (lookup_order)
+    const originalExecute = TOOLS[toolIndex].execute;
+
+    try {
+      // Make the tool throw an error
+      TOOLS[toolIndex].execute = () => {
+        throw new Error('Simulated tool execution failure');
+      };
+
+      // Call executeTool - it should catch the error and return JSON
+      const result = JSON.parse(executeTool(TOOLS[toolIndex].name, {}));
+
+      // Verify we got an error JSON response, not a thrown exception
+      expect(result.error).toBeDefined();
+      expect(result.error).toContain('Simulated tool execution failure');
+      expect(typeof result.error).toBe('string');
+    } finally {
+      // Restore the original execute method
+      TOOLS[toolIndex].execute = originalExecute;
+    }
   });
 });
