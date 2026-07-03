@@ -1,6 +1,10 @@
 # Dependencies
 node_modules/
 **/node_modules/
+agent-runtime/.venv/
+**/__pycache__/
+*.pyc
+agent-runtime/chroma_data/
 
 # Next.js build output
 .next/
