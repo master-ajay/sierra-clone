@@ -63,3 +63,20 @@ def list_audit(
     items = [_row_to_audit(r) for r in rows[:limit]]
     next_cursor = items[-1].created_at if has_more else None
     return items, next_cursor
+
+
+def get_stats(conn: sqlite3.Connection) -> dict:
+    rows = conn.execute("SELECT flags, allowed FROM audit_log").fetchall()
+    total_checks = len(rows)
+    total_blocked = sum(1 for r in rows if not r["allowed"])
+    flags_by_type = {"pii": 0, "prompt_injection": 0, "rate_limit": 0}
+    for row in rows:
+        for flag in json.loads(row["flags"]):
+            flags_by_type[flag["type"]] += 1
+    block_rate = total_blocked / total_checks if total_checks else 0.0
+    return {
+        "total_checks": total_checks,
+        "total_blocked": total_blocked,
+        "flags_by_type": flags_by_type,
+        "block_rate": block_rate,
+    }
