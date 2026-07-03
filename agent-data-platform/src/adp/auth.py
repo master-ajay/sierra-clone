@@ -1,8 +1,6 @@
 from fastapi import Depends, Request
-from fastapi.responses import JSONResponse
 
 from adp.config import Settings, get_settings
-from adp.errors import error_response
 
 
 async def require_api_key(request: Request, settings: Settings = Depends(get_settings)) -> None:

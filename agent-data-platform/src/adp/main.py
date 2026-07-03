@@ -7,7 +7,7 @@ from fastapi.responses import JSONResponse
 from adp.config import get_settings
 from adp.database import run_migrations
 from adp.errors import error_response
-from adp.routes import system
+from adp.routes import context, messages, search, sessions, system, users
 
 
 @asynccontextmanager
@@ -26,3 +26,8 @@ async def validation_error_handler(request: Request, exc: RequestValidationError
 
 
 app.include_router(system.router)
+app.include_router(users.router)
+app.include_router(sessions.router)
+app.include_router(messages.router)
+app.include_router(context.router)
+app.include_router(search.router)
