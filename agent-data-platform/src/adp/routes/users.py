@@ -19,10 +19,6 @@ from adp.services.user_service import (
 router = APIRouter(dependencies=[Depends(require_api_key)])
 
 
-def _conn(settings: Settings = Depends(get_settings)) -> sqlite3.Connection:
-    return get_connection(settings.adp_db_path)
-
-
 @router.post("/v1/users", status_code=201)
 def create(body: UserCreate, settings: Settings = Depends(get_settings)):
     conn = get_connection(settings.adp_db_path)

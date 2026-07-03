@@ -1,5 +1,5 @@
 
-from fastapi import APIRouter, Depends, Request
+from fastapi import APIRouter, Depends
 
 from adp.auth import require_api_key
 from adp.config import Settings, get_settings
@@ -9,7 +9,7 @@ router = APIRouter(dependencies=[Depends(require_api_key)])
 
 
 @router.get("/v1/health")
-def health(request: Request, settings: Settings = Depends(get_settings)) -> dict:
+def health(settings: Settings = Depends(get_settings)) -> dict:
     try:
         conn = get_connection(settings.adp_db_path)
         conn.execute("SELECT 1")
