@@ -79,5 +79,10 @@ export function getToolByName(name: string): ToolDef | undefined {
 export function executeTool(name: string, args: Record<string, unknown>): string {
   const tool = getToolByName(name);
   if (!tool) return JSON.stringify({ error: `Unknown tool: ${name}` });
-  return tool.execute(args);
+  try {
+    return tool.execute(args);
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    return JSON.stringify({ error: message });
+  }
 }

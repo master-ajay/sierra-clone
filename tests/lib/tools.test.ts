@@ -31,4 +31,10 @@ describe('tools', () => {
   it('exposes lookup_order via getToolByName', () => {
     expect(getToolByName('lookup_order')?.name).toBe('lookup_order');
   });
+
+  it('returns error JSON when tool throws (missing required arg)', () => {
+    const result = JSON.parse(executeTool('lookup_order', {}));
+    expect(result.error).toBeDefined();
+    expect(typeof result.error).toBe('string');
+  });
 });
