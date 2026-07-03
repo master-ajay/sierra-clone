@@ -231,6 +231,39 @@ Once a product is live (even informally, even just for internal use), things wil
 
 ---
 
+## PART 8 — UI/UX Standards (for any product with a user-facing interface)
+
+Several products in the roadmap have real UI surfaces — Agent Studio's visual builder, Insights' dashboards, Ghostwriter's chat interface, any customer-facing widget. "Fantastic, Sierra-level UI" isn't a vibe either — same as the engineering quality bar, it needs to be a concrete process, or it defaults to a generic admin-panel look.
+
+### Before writing any UI code
+Read `/mnt/skills/public/frontend-design/SKILL.md` in full and actually follow its process — brainstorm a design plan (color/type/layout/signature) before writing code, critique that plan against the brief, then build. Skipping straight to code is how UI ends up looking like every other AI-generated dashboard.
+
+### What "fantastic" means for this category of product specifically
+This platform is enterprise agent tooling, not a marketing site or a consumer app — the design bar looks different than a landing page:
+
+- **Trustworthy over flashy.** A support manager configuring an agent that talks to real customers needs to feel in control, not delighted by animation. Motion should be purposeful (a state transition, a loading moment) — restraint reads as competence in this category.
+- **Data-dense without feeling cluttered.** Insights dashboards, conversation traces, and confidence scores are inherently data-heavy. The signature move here is usually clarity of hierarchy — what's the one number/status that matters most on this screen — not decoration.
+- **The trace/explainability data is a design opportunity, not an afterthought.** Sierra's actual gap (per our earlier research) is that its orchestration is a black box. Every screen that shows an agent's reasoning — retrieved sources, confidence score, guardrail pass/fail — should be designed to make that transparency feel like a feature, not a debug log dumped onto the page.
+- **Consistent with Part 3's cross-product conventions.** The same type scale, color tokens, and component patterns should carry across every product's UI, so Agent Studio and Insights feel like one platform. Establish the token system once (see below) and reuse it — don't let each product invent its own visual language.
+
+### Process per UI-having product
+1. **Brainstorm the design plan first** (per the skill): 4–6 named color tokens, 2+ typefaces with clear roles, a layout concept, and one signature element — before any code.
+2. **Ground it in the actual subject.** An agent-builder canvas and a conversation-analytics dashboard are different subjects with different real content — design from what the screen actually needs to show, not a generic template.
+3. **Avoid the default AI-design tells** — the skill names three specific clichés (warm-cream-and-terracotta, near-black-with-one-accent, hairline-rule broadsheet) that show up by default unless deliberately avoided. If the design plan lands on one of these without a specific reason tied to this brief, revise it.
+4. **Build to the quality floor regardless of aesthetic direction:** responsive down to mobile, visible keyboard focus, reduced-motion respected, real copy (not lorem ipsum) written in the interface's own voice.
+5. **Self-critique with actual screenshots**, not just a mental check — render it, look at it, and remove one thing before calling it done (the "look in the mirror, remove one accessory" rule from the skill).
+6. **Microcopy follows the same rigor as code.** Buttons say what they do ("Publish agent," not "Submit"). Errors state what happened and how to fix it, in the interface's voice, never vague. The same term for an action carries through the whole flow — including the confirmation state.
+
+### Definition of Done, UI-specific addition
+On top of Part 2's general Definition of Done, a UI milestone also needs:
+- [ ] Design plan (tokens, layout, signature) reviewed against the brief *before* build, not reverse-justified after.
+- [ ] Screenshot self-review completed, at least one thing cut for restraint.
+- [ ] Responsive and keyboard-accessible, verified, not assumed.
+- [ ] Consistent with the shared token system from prior products (or, if this is the first UI-having product built, establishes the token system that later products will reuse).
+- [ ] Copy reviewed for the active-voice, plain-language standard above — no generic SaaS filler ("Unlock the power of...").
+
+---
+
 ## Appendix — Reusable Product Spec Template
 
 Use this structure for every new product spec, so all eight end up consistent and nothing gets forgotten:
