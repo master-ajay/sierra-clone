@@ -10,7 +10,7 @@ export async function GET() {
 export async function POST(req: NextRequest) {
   const body = await req.json();
   if (!body.name || typeof body.name !== 'string') {
-    return NextResponse.json({ error: 'name is required' }, { status: 400 });
+    return NextResponse.json({ error: { code: 'validation_error', message: 'name is required', details: {} } }, { status: 400 });
   }
   const db = getDb();
   const agent = createAgent(db, body);

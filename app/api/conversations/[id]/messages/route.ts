@@ -8,20 +8,20 @@ import { runChatTurn } from '@/lib/chat';
 export async function POST(req: NextRequest, { params }: { params: { id: string } }) {
   const body = await req.json();
   if (!body.message || typeof body.message !== 'string') {
-    return new Response(JSON.stringify({ error: 'message is required' }), { status: 400 });
+    return new Response(JSON.stringify({ error: { code: 'validation_error', message: 'message is required', details: {} } }), { status: 400 });
   }
 
   const db = getDb();
   const conversation = getConversation(db, params.id);
-  if (!conversation) return new Response(JSON.stringify({ error: 'conversation not found' }), { status: 404 });
+  if (!conversation) return new Response(JSON.stringify({ error: { code: 'not_found', message: 'conversation not found', details: {} } }), { status: 404 });
   const agent = getAgent(db, conversation.agentId);
-  if (!agent) return new Response(JSON.stringify({ error: 'agent not found' }), { status: 404 });
+  if (!agent) return new Response(JSON.stringify({ error: { code: 'not_found', message: 'agent not found', details: {} } }), { status: 404 });
 
   let client;
   try {
     client = getGroqClient();
   } catch (err) {
-    return new Response(JSON.stringify({ error: (err as Error).message }), { status: 500 });
+    return new Response(JSON.stringify({ error: { code: 'configuration_error', message: (err as Error).message, details: {} } }), { status: 500 });
   }
 
   const encoder = new TextEncoder();

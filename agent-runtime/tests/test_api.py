@@ -81,7 +81,7 @@ def test_query_endpoint_returns_clean_json_error_on_runtime_error():
     res = client.post("/v1/query", json={"query": "hi"})
 
     assert res.status_code == 500
-    assert res.json() == {"error": "GROQ_API_KEY is not set. Add it to .env."}
+    assert res.json() == {"error": {"code": "runtime_error", "message": "GROQ_API_KEY is not set. Add it to .env.", "details": {}}}
     app.dependency_overrides.clear()
 
 
@@ -98,5 +98,6 @@ def test_query_stream_endpoint_emits_error_event_on_runtime_error():
 
     assert len(events) == 1
     assert events[0]["type"] == "error"
+    assert events[0]["code"] == "runtime_error"
     assert "GROQ_API_KEY" in events[0]["message"]
     app.dependency_overrides.clear()

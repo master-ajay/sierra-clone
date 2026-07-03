@@ -13,7 +13,10 @@ app = FastAPI(title="Agent Runtime")
 
 @app.exception_handler(RuntimeError)
 def runtime_error_handler(request: Request, exc: RuntimeError) -> JSONResponse:
-    return JSONResponse(status_code=500, content={"error": str(exc)})
+    return JSONResponse(
+        status_code=500,
+        content={"error": {"code": "runtime_error", "message": str(exc), "details": {}}},
+    )
 
 
 def create_agent() -> Agent:
@@ -50,7 +53,7 @@ def query_stream(body: QueryRequest, agent: Agent = Depends(get_agent)) -> Strea
         try:
             response = agent.query(body.query)
         except RuntimeError as exc:
-            yield f"data: {json.dumps({'type': 'error', 'message': str(exc)})}\n\n"
+            yield f"data: {json.dumps({'type': 'error', 'code': 'runtime_error', 'message': str(exc)})}\n\n"
             return
 
         text = response.answer or response.escalation_reason or ""
