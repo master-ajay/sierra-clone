@@ -9,9 +9,26 @@ shared Agent Runtime & SDK.
 single source of truth for how every product gets built (pipeline, roles,
 quality bar, consistency standards). Read it once; apply it to every product.
 
-**Current products:**
-- Agent Runtime & SDK — `docs/superpowers/specs/2026-07-04-agent-runtime-design.md` / `docs/superpowers/plans/2026-07-04-agent-runtime.md`
-- Agent Studio (Product 1/7) — `docs/superpowers/specs/2026-07-03-agent-studio-design.md` / `docs/superpowers/plans/2026-07-03-agent-studio.md`
+**Products — status and specs:**
+
+| Product | Dir | Port | Status | Spec | Plan |
+|---|---|---|---|---|---|
+| Agent Runtime | `agent-runtime/` | 8001 | Done | `specs/2026-07-04-agent-runtime-design.md` | `plans/2026-07-04-agent-runtime.md` |
+| Agent Studio | `app/` (repo root) | 3000 | Done | `specs/2026-07-03-agent-studio-design.md` | `plans/2026-07-03-agent-studio.md` |
+| Agent Data Platform | `agent-data-platform/` | 8100 | Done | `specs/2026-07-04-adp-design.md` | `plans/2026-07-04-adp.md` |
+| Channels | `channels/` | 8200 | Not started | `specs/2026-07-04-channels-design.md` | TBD |
+| Ghostwriter | `ghostwriter/` | 8300 | Not started | `specs/2026-07-04-ghostwriter-design.md` | TBD |
+| Explorer | `explorer/` | 8400 | Not started | `specs/2026-07-04-explorer-design.md` | TBD |
+| Trust & Reliability | `trust/` | 8500 | Not started | `specs/2026-07-04-trust-design.md` | TBD |
+
+All spec paths are relative to `docs/superpowers/`.
+
+**Conflict-prevention rules for parallel agents:**
+- Each agent owns exactly one product directory. Never write outside your product dir.
+- Specs and plans in `docs/superpowers/` are read-only during a build.
+- `CLAUDE.md` is only edited between products, never mid-build.
+- Commit prefix: `[channels]`, `[ghostwriter]`, `[explorer]`, `[trust]`.
+- No cross-product imports — products communicate at runtime via HTTP only.
 
 ## Stack
 
