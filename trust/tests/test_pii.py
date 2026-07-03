@@ -1,5 +1,6 @@
 from trust.services.pii import scan_pii
 
+
 def test_no_pii_unchanged():
     clean, flags = scan_pii("Hello, how can I help you?")
     assert clean == "Hello, how can I help you?"

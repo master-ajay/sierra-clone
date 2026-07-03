@@ -1,4 +1,5 @@
 import re
+
 from trust.models.check import Flag
 
 _PATTERNS = [

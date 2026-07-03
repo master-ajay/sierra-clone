@@ -1,5 +1,6 @@
 from collections import deque
 from datetime import datetime, timezone
+
 from trust.models.check import Flag
 
 _windows: dict[str, deque] = {}

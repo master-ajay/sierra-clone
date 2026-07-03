@@ -1,4 +1,5 @@
 from fastapi import APIRouter, Depends, Query
+
 from trust.auth import require_api_key
 from trust.config import Settings, get_settings
 from trust.database import get_connection

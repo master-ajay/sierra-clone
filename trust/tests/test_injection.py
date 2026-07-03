@@ -1,5 +1,6 @@
 from trust.services.injection import scan_injection
 
+
 def test_clean_message_passes():
     assert scan_injection("What is your return policy?") == []
 
