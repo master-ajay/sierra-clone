@@ -7,13 +7,15 @@ from fastapi.responses import JSONResponse
 from trust.config import get_settings
 from trust.database import run_migrations
 from trust.errors import error_response
-from trust.routes import system
+from trust.routes import audit, check, system
+from trust.services.rate_limiter import RateLimiter
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     settings = get_settings()
     run_migrations(settings.trust_db_path)
+    app.state.rate_limiter = RateLimiter(rpm=settings.trust_rate_limit_rpm)
     yield
 
 
@@ -33,3 +35,5 @@ async def http_exception_handler(request: Request, exc: HTTPException) -> JSONRe
 
 
 app.include_router(system.router)
+app.include_router(check.router)
+app.include_router(audit.router)
