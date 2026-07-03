@@ -6,3 +6,9 @@ class Chunk(BaseModel):
     text: str
     source: str
     score: float = 0.0
+
+
+class GuardrailTrace(BaseModel):
+    faithfulness_score: float
+    threshold: float
+    passed: bool
