@@ -1,11 +1,3 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
-
-body {
-  @apply bg-base text-white;
-}
-
-::selection {
-  @apply bg-accent/30;
-}

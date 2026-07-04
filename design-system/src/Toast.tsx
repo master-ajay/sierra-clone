@@ -1,3 +1,5 @@
+'use client'
+
 import { createContext, useCallback, useContext, useState, ReactNode, useRef } from 'react'
 
 export type ToastVariant = 'success' | 'error' | 'info'
