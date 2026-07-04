@@ -3,6 +3,9 @@ import sqlite3
 import uuid
 from datetime import datetime, timezone
 
+import httpx
+
+from channels.config import Settings
 from channels.models.channel import ChannelCreate, ChannelResponse, ChannelUpdate
 
 
@@ -24,9 +27,18 @@ def _row_to_channel(row: sqlite3.Row) -> ChannelResponse:
     )
 
 
-def create_channel(conn: sqlite3.Connection, data: ChannelCreate) -> ChannelResponse:
+def create_channel(conn: sqlite3.Connection, data: ChannelCreate, settings: Settings) -> ChannelResponse:
     channel_id = str(uuid.uuid4())
-    adp_user_id = str(uuid.uuid4())  # synthetic ADP user for this channel
+    # Register a real ADP user for this channel's synthetic identity instead
+    # of inventing a local UUID ADP has never heard of - otherwise the first
+    # chat message 404s trying to open a session for an unknown user.
+    adp_resp = httpx.post(
+        f"{settings.channels_adp_url}/v1/users",
+        json={"display_name": f"channel:{data.name}"},
+        headers={"X-API-Key": settings.channels_adp_api_key},
+    )
+    adp_resp.raise_for_status()
+    adp_user_id = adp_resp.json()["user_id"]
     channel_key = secrets.token_hex(32)  # 64 hex chars
     now = _now()
     conn.execute(

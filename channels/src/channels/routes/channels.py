@@ -19,7 +19,7 @@ router = APIRouter(dependencies=[Depends(require_api_key)])
 @router.post("/v1/channels", status_code=201)
 def create(body: ChannelCreate, settings: Settings = Depends(get_settings)):
     conn = get_connection(settings.channels_db_path)
-    return create_channel(conn, body)
+    return create_channel(conn, body, settings)
 
 
 @router.get("/v1/channels")
