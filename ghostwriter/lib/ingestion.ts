@@ -23,7 +23,16 @@ export async function ingestArticle(article_id: string, content: string): Promis
   }
 }
 
-// Best-effort: Agent Runtime v1 has no delete endpoint. Log the gap.
 export async function removeArticle(article_id: string): Promise<void> {
-  console.warn(`[ghostwriter] Article ${article_id} deleted from DB. Runtime index cleanup requires Agent Runtime v1.1.`)
+  const runtimeUrl = process.env.GHOSTWRITER_RUNTIME_URL ?? 'http://localhost:8001'
+  try {
+    const res = await fetch(`${runtimeUrl}/v1/knowledge-base/source/${encodeURIComponent(article_id)}`, {
+      method: 'DELETE',
+    })
+    if (!res.ok) {
+      console.error('remove_article_failed', res.status, article_id)
+    }
+  } catch (err) {
+    console.error('remove_article_error', article_id, err)
+  }
 }

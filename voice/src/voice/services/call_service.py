@@ -145,16 +145,16 @@ def exchange_turn(conn: sqlite3.Connection, call_id: str, text: str, line_key: s
     result = rt_resp.json()
     reply = result.get("answer", "")
 
-    # 4. Score sentiment via Agent Runtime
+    # 4. Score sentiment via Agent Runtime (generate mode — no RAG needed)
     try:
         sentiment_prompt = (
             f"Score the sentiment of this text on a scale from -1 (very negative) to 1 (very positive). "
             f'Reply with JSON only: {{"label": "positive|negative|neutral", "score": <float>}}. '
-            f"Text: {text}"
+            f"Text: {text_clean}"
         )
         sent_resp = httpx.post(
             f"{settings.voice_runtime_url}/query",
-            json={"question": sentiment_prompt, "history": []},
+            json={"question": sentiment_prompt, "history": [], "mode": "generate"},
         )
         sent_resp.raise_for_status()
     except httpx.HTTPStatusError as exc:
@@ -276,7 +276,7 @@ def escalate_call(conn: sqlite3.Connection, call_id: str, settings: Settings) ->
     try:
         rt_resp = httpx.post(
             f"{settings.voice_runtime_url}/query",
-            json={"question": summary_prompt, "history": []},
+            json={"question": summary_prompt, "history": [], "mode": "generate"},
         )
         rt_resp.raise_for_status()
     except httpx.HTTPStatusError as exc:
@@ -288,7 +288,10 @@ def escalate_call(conn: sqlite3.Connection, call_id: str, settings: Settings) ->
 
     summary = rt_resp.json().get("answer", "")
 
+    trend: list[float] = json.loads(call_row["sentiment_trend_json"])
+    average_sentiment = sum(trend) / len(trend) if trend else 0.0
+
     conn.execute("UPDATE calls SET status='escalated' WHERE call_id=?", (call_id,))
     conn.commit()
 
-    return {"summary": summary, "turns": turns}
+    return {"summary": summary, "turns": turns, "sentiment_trend": trend, "average_sentiment": average_sentiment}

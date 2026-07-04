@@ -7,7 +7,7 @@ from fastapi.responses import JSONResponse, StreamingResponse
 from pydantic import BaseModel
 
 from agent_runtime.agent import Agent
-from agent_runtime.ingestion.indexer import upsert_chunks
+from agent_runtime.ingestion.indexer import delete_by_source, upsert_chunks
 from agent_runtime.ingestion.loader import chunk_text
 from agent_runtime.models import AgentResponse, Chunk
 
@@ -77,6 +77,12 @@ def query_stream(body: QueryRequest, agent: Agent = Depends(get_agent)) -> Strea
         yield f"data: {json.dumps({'type': 'done', 'response': response.model_dump()})}\n\n"
 
     return StreamingResponse(event_stream(), media_type="text/event-stream")
+
+
+@app.delete("/v1/knowledge-base/source/{source}")
+def delete_source(source: str, agent: Agent = Depends(get_agent)) -> dict:
+    removed = delete_by_source(source, agent.persist_path)
+    return {"deleted": removed}
 
 
 @app.post("/v1/knowledge-base/ingest")

@@ -62,6 +62,29 @@ def upsert_chunks(chunks: list[Chunk], persist_path: str) -> IndexResult:
     return IndexResult(chunks_indexed=len(chunks))
 
 
+def delete_by_source(source: str, persist_path: str) -> int:
+    """Remove all chunks whose source matches the given source string. Returns count removed."""
+    client = chromadb.PersistentClient(path=persist_path)
+    collection = client.get_or_create_collection(COLLECTION_NAME)
+    result = collection.get(where={"source": source})
+    ids_to_delete = result["ids"]
+    if ids_to_delete:
+        collection.delete(ids=ids_to_delete)
+
+    # Rebuild BM25 over remaining corpus
+    all_data = collection.get()
+    all_chunks = [
+        Chunk(id=doc_id, text=doc, source=meta.get("source", ""))
+        for doc_id, doc, meta in zip(all_data["ids"], all_data["documents"], all_data["metadatas"])
+    ]
+    tokenized_corpus = [c.text.lower().split() for c in all_chunks]
+    bm25 = BM25Okapi(tokenized_corpus) if tokenized_corpus else None
+    with open(Path(persist_path) / BM25_FILENAME, "wb") as f:
+        pickle.dump({"bm25": bm25, "chunks": all_chunks}, f)
+
+    return len(ids_to_delete)
+
+
 def load_bm25_index(persist_path: str) -> tuple[BM25Okapi, list[Chunk]]:
     with open(Path(persist_path) / BM25_FILENAME, "rb") as f:
         data = pickle.load(f)

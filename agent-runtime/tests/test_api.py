@@ -72,6 +72,23 @@ def test_query_stream_endpoint_emits_content_then_done_event():
     app.dependency_overrides.clear()
 
 
+def test_delete_source_endpoint_returns_deleted_count():
+    agent = MagicMock()
+    agent.persist_path = "/tmp/test-vector-db"
+    import agent_runtime.api as api_module
+    original = api_module.delete_by_source
+    api_module.delete_by_source = MagicMock(return_value=3)
+    app.dependency_overrides[get_agent] = lambda: agent
+    client = TestClient(app)
+
+    res = client.delete("/v1/knowledge-base/source/my-article-123")
+
+    assert res.status_code == 200
+    assert res.json() == {"deleted": 3}
+    app.dependency_overrides.clear()
+    api_module.delete_by_source = original
+
+
 def test_query_endpoint_returns_clean_json_error_on_runtime_error():
     agent = MagicMock()
     agent.query.side_effect = RuntimeError("GROQ_API_KEY is not set. Add it to .env.")

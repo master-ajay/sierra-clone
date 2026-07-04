@@ -6,7 +6,8 @@ import chromadb
 import pytest
 
 from agent_runtime.ingestion.loader import load_and_chunk
-from agent_runtime.ingestion.indexer import index_chunks, load_bm25_index
+from agent_runtime.ingestion.indexer import delete_by_source, index_chunks, load_bm25_index, upsert_chunks
+from agent_runtime.models import Chunk
 
 SAMPLE_DOCS = Path(__file__).parent.parent / "docs"
 
@@ -69,3 +70,34 @@ def test_index_chunks_writes_loadable_bm25_index(persist_dir):
     scores = bm25.get_scores("password reset".split())
     best_idx = scores.argmax()
     assert "password" in indexed_chunks[best_idx].text.lower()
+
+
+def test_upsert_chunks_adds_without_clearing_existing(persist_dir):
+    initial = [Chunk(id="doc-a::0", text="Refund takes 3 days", source="doc-a")]
+    index_chunks(initial, persist_dir)
+
+    new = [Chunk(id="doc-b::0", text="Shipping takes 2 days", source="doc-b")]
+    result = upsert_chunks(new, persist_dir)
+
+    assert result.chunks_indexed == 1
+    client = chromadb.PersistentClient(path=persist_dir)
+    collection = client.get_collection("knowledge_base")
+    assert collection.count() == 2
+
+
+def test_delete_by_source_removes_chunks_and_rebuilds_index(persist_dir):
+    chunks = [
+        Chunk(id="doc-a::0", text="Refund takes 3 days", source="doc-a"),
+        Chunk(id="doc-a::1", text="Refund policy: 30 days", source="doc-a"),
+        Chunk(id="doc-b::0", text="Shipping takes 2 days", source="doc-b"),
+    ]
+    index_chunks(chunks, persist_dir)
+
+    removed = delete_by_source("doc-a", persist_dir)
+
+    assert removed == 2
+    client = chromadb.PersistentClient(path=persist_dir)
+    collection = client.get_collection("knowledge_base")
+    assert collection.count() == 1
+    _, remaining = load_bm25_index(persist_dir)
+    assert all(c.source == "doc-b" for c in remaining)
