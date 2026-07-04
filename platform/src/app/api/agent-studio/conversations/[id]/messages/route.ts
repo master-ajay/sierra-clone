@@ -5,14 +5,15 @@ import { getAgent } from '@/lib/agent-studio/agents';
 import { getGroqClient } from '@/lib/agent-studio/groq';
 import { runChatTurn } from '@/lib/agent-studio/chat';
 
-export async function POST(req: NextRequest, { params }: { params: { id: string } }) {
+export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   const body = await req.json();
   if (!body.message || typeof body.message !== 'string') {
     return new Response(JSON.stringify({ error: { code: 'validation_error', message: 'message is required', details: {} } }), { status: 400 });
   }
 
   const db = getDb();
-  const conversation = getConversation(db, params.id);
+  const conversation = getConversation(db, id);
   if (!conversation) return new Response(JSON.stringify({ error: { code: 'not_found', message: 'conversation not found', details: {} } }), { status: 404 });
   const agent = getAgent(db, conversation.agentId);
   if (!agent) return new Response(JSON.stringify({ error: { code: 'not_found', message: 'agent not found', details: {} } }), { status: 404 });
@@ -33,7 +34,7 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
           onContentDelta: (delta) => send({ type: 'content', delta }),
           onToolCallStart: (name) => send({ type: 'tool_call', name }),
         });
-        appendMessages(db, params.id, newMessages);
+        appendMessages(db, id, newMessages);
         send({ type: 'done', messages: newMessages });
       } catch (err) {
         send({ type: 'error', message: (err as Error).message });

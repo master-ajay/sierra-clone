@@ -22,13 +22,13 @@ describe('agent detail API', () => {
   it('gets an existing agent', async () => {
     const db = getDb();
     const agent = createAgent(db, { name: 'Test Agent' });
-    const res = await GET(new Request('http://localhost') as any, { params: { id: agent.id } });
+    const res = await GET(new Request('http://localhost') as any, { params: Promise.resolve({ id: agent.id }) });
     const body = await res.json();
     expect(body.id).toBe(agent.id);
   });
 
   it('returns 404 for a missing agent', async () => {
-    const res = await GET(new Request('http://localhost') as any, { params: { id: 'nope' } });
+    const res = await GET(new Request('http://localhost') as any, { params: Promise.resolve({ id: 'nope' }) });
     expect(res.status).toBe(404);
   });
 
@@ -40,7 +40,7 @@ describe('agent detail API', () => {
         method: 'PUT',
         body: JSON.stringify({ instructions: 'New instructions' }),
       }) as any,
-      { params: { id: agent.id } }
+      { params: Promise.resolve({ id: agent.id }) }
     );
     const body = await res.json();
     expect(body.instructions).toBe('New instructions');

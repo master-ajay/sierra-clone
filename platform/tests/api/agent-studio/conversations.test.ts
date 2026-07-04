@@ -23,12 +23,12 @@ describe('agent conversations API', () => {
     const db = getDb();
     const agent = createAgent(db, { name: 'Test Agent' });
 
-    const createRes = await POST(new Request('http://localhost') as any, { params: { id: agent.id } });
+    const createRes = await POST(new Request('http://localhost') as any, { params: Promise.resolve({ id: agent.id }) });
     expect(createRes.status).toBe(201);
     const created = await createRes.json();
     expect(created.agentId).toBe(agent.id);
 
-    const listRes = await GET(new Request('http://localhost') as any, { params: { id: agent.id } });
+    const listRes = await GET(new Request('http://localhost') as any, { params: Promise.resolve({ id: agent.id }) });
     const list = await listRes.json();
     expect(list).toHaveLength(1);
     expect(list[0].id).toBe(created.id);

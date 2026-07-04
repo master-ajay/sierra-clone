@@ -67,7 +67,7 @@ describe('POST /api/agent-studio/conversations/[id]/messages', () => {
       method: 'POST',
       body: JSON.stringify({ message: 'hello' }),
     });
-    const res = await POST(req as any, { params: { id: conversation.id } });
+    const res = await POST(req as any, { params: Promise.resolve({ id: conversation.id }) });
     const events = await readAllSse(res);
 
     expect(events.some((e) => e.type === 'content' && e.delta === 'Hi there!')).toBe(true);
@@ -89,7 +89,7 @@ describe('POST /api/agent-studio/conversations/[id]/messages', () => {
       method: 'POST',
       body: JSON.stringify({}),
     });
-    const res = await POST(req as any, { params: { id: conversation.id } });
+    const res = await POST(req as any, { params: Promise.resolve({ id: conversation.id }) });
     expect(res.status).toBe(400);
   });
 });
