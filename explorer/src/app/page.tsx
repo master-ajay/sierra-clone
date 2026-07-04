@@ -1,9 +1,5 @@
-import { AppShell } from 'design-system'
+import { redirect } from 'next/navigation'
 
 export default function HomePage() {
-  return (
-    <AppShell nav={[]} productName="Insights / Explorer" title="Explorer">
-      <p className="text-sm text-text-muted">Loading…</p>
-    </AppShell>
-  )
+  redirect('/insights')
 }
