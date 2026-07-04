@@ -36,9 +36,13 @@ function adpHeaders(): HeadersInit {
 }
 
 export async function fetchUserSessions(userId: string, window?: string): Promise<AdpSession[]> {
-  const params = new URLSearchParams({ user_id: userId })
+  // ADP scopes session listing under the user path (GET /v1/users/{id}/sessions),
+  // not a flat /v1/sessions?user_id=... query - the previous URL here 404'd
+  // against a real ADP instance and was only ever exercised via mocks.
+  const params = new URLSearchParams()
   if (window) params.set('window', window)
-  const res = await fetch(`${ADP_URL}/v1/sessions?${params}`, { headers: adpHeaders() })
+  const qs = params.toString() ? `?${params}` : ''
+  const res = await fetch(`${ADP_URL}/v1/users/${userId}/sessions${qs}`, { headers: adpHeaders() })
   if (!res.ok) return []
   const data = await res.json() as { items: AdpSession[] }
   return data.items ?? []
