@@ -37,20 +37,19 @@ UIs on one shared design system, based on Sierra's actual brand (deep forest gre
 warm beige/cream, minimal card-based console). See each spec's §1 Problem Statement
 for detail.
 
-**This has a hard sequencing constraint: the Design System must be built and merged
-before any product UI work starts** — every product spec below imports it. It cannot
-be parallelized away.
+**Design System is now built and merged — the blocking constraint is
+cleared.** Product UI work can start.
 
 | Sub-project | Dir | Port | Status | Spec | Plan |
 |---|---|---|---|---|---|
-| Design System | `design-system/` | n/a (library) | Not started — **build first, blocking** | `specs/2026-07-04-design-system-design.md` | TBD |
-| Agent Studio UI (rebuild) | `app/` | 3000 | Not started — blocked on Design System | `specs/2026-07-04-agent-studio-ui-design.md` | TBD |
-| Ghostwriter UI (rebuild) | `ghostwriter/` | 8300 | Not started — blocked on Design System | `specs/2026-07-04-ghostwriter-ui-design.md` | TBD |
-| Insights/Explorer UI (rebuild) | `explorer/` | 8400 | Not started — blocked on Design System | `specs/2026-07-04-insights-explorer-ui-design.md` | TBD |
-| Trust & Reliability UI (rebuild) | `trust/ui/` | 8501 | Not started — blocked on Design System | `specs/2026-07-04-trust-ui-design.md` | TBD |
-| Channels UI (new) | `channels/ui/` | 8201 | Not started — blocked on Design System | `specs/2026-07-04-channels-ui-design.md` | TBD |
-| Expert Answers UI (new) | `expert-answers/ui/` | 8601 | Not started — blocked on Design System | `specs/2026-07-04-expert-answers-ui-design.md` | TBD |
-| Voice UI (new) | `voice/ui/` | 8701 | Not started — blocked on Design System | `specs/2026-07-04-voice-ui-design.md` | TBD |
+| Design System | `design-system/` | n/a (library) | **Done** | `specs/2026-07-04-design-system-design.md` | `plans/2026-07-04-design-system.md` |
+| Agent Studio UI (rebuild) | `app/` | 3000 | Not started | `specs/2026-07-04-agent-studio-ui-design.md` | TBD |
+| Ghostwriter UI (rebuild) | `ghostwriter/` | 8300 | Not started | `specs/2026-07-04-ghostwriter-ui-design.md` | TBD |
+| Insights/Explorer UI (rebuild) | `explorer/` | 8400 | Not started | `specs/2026-07-04-insights-explorer-ui-design.md` | TBD |
+| Trust & Reliability UI (rebuild) | `trust/ui/` | 8501 | Not started | `specs/2026-07-04-trust-ui-design.md` | TBD |
+| Channels UI (new) | `channels/ui/` | 8201 | Not started | `specs/2026-07-04-channels-ui-design.md` | TBD |
+| Expert Answers UI (new) | `expert-answers/ui/` | 8601 | Not started | `specs/2026-07-04-expert-answers-ui-design.md` | TBD |
+| Voice UI (new) | `voice/ui/` | 8701 | Not started | `specs/2026-07-04-voice-ui-design.md` | TBD |
 
 **Suggested two-agent phase-2 split (once Design System is merged), balanced by
 effort rather than headcount — adjust freely:**
