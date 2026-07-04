@@ -20,5 +20,16 @@
     "plugins": [{ "name": "next" }]
   },
   "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],
-  "exclude": ["node_modules"]
+  "exclude": [
+    "node_modules",
+    "agent-data-platform",
+    "agent-runtime",
+    "channels",
+    "design-system",
+    "expert-answers",
+    "explorer",
+    "ghostwriter",
+    "trust",
+    "voice"
+  ]
 }
