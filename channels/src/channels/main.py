@@ -1,7 +1,7 @@
 import logging
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 
@@ -23,6 +23,15 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(title="Channels", lifespan=lifespan)
+
+
+@app.exception_handler(HTTPException)
+async def http_exception_handler(request: Request, exc: HTTPException) -> JSONResponse:
+    if exc.status_code >= 500:
+        logger.error("http_exception path=%s status=%d detail=%s", request.url.path, exc.status_code, exc.detail)
+    if isinstance(exc.detail, dict) and "error" in exc.detail:
+        return JSONResponse(status_code=exc.status_code, content=exc.detail)
+    return error_response("http_error", str(exc.detail), exc.status_code)
 
 
 @app.exception_handler(RequestValidationError)

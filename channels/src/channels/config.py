@@ -9,6 +9,8 @@ class Settings(BaseSettings):
     channels_adp_url: str = "http://localhost:8100"
     channels_adp_api_key: str = "change-me"
     channels_runtime_url: str = "http://localhost:8001"
+    channels_trust_url: str = "http://localhost:8500"
+    channels_trust_api_key: str = "change-me"
 
     model_config = {"env_file": ".env", "extra": "ignore"}
 

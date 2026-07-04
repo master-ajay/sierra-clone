@@ -4,6 +4,9 @@ import respx
 H = {"X-API-Key": "test-key-123"}
 ADP_BASE = "http://localhost:8100"
 RT_BASE = "http://localhost:8001"
+TRUST_BASE = "http://localhost:8500"
+
+_TRUST_ALLOWED = {"allowed": True, "message_clean": "How long does shipping take?", "flags": [], "audit_id": "audit-1"}
 
 
 @respx.mock
@@ -15,6 +18,7 @@ def test_full_lifecycle(client):
     assert len(ckey) == 64
 
     # 2. Mock upstreams
+    respx.post(f"{TRUST_BASE}/v1/check").mock(return_value=httpx.Response(200, json=_TRUST_ALLOWED))
     respx.post(f"{ADP_BASE}/v1/users/{uid}/sessions").mock(return_value=httpx.Response(201, json={"session_id": "sid-1"}))
     respx.post(f"{ADP_BASE}/v1/context").mock(return_value=httpx.Response(200, json={"messages": [], "user": None, "session_summary": {}, "token_estimate": 0}))
     respx.post(f"{RT_BASE}/query").mock(return_value=httpx.Response(200, json={"answer": "We ship in 2 days.", "citations": ["shipping.md::0"], "trace": {"confidence_score": 0.92}}))
@@ -41,6 +45,7 @@ def test_full_lifecycle(client):
 
     # 6. Re-activate → messages work again
     client.patch(f"/v1/channels/{cid}", json={"status": "active"}, headers=H)
+    respx.post(f"{TRUST_BASE}/v1/check").mock(return_value=httpx.Response(200, json={**_TRUST_ALLOWED, "message_clean": "follow up"}))
     respx.post(f"{ADP_BASE}/v1/context").mock(return_value=httpx.Response(200, json={"messages": [], "user": None, "session_summary": {}, "token_estimate": 0}))
     respx.post(f"{RT_BASE}/query").mock(return_value=httpx.Response(200, json={"answer": "Sure!", "citations": [], "trace": {}}))
     respx.post(f"{ADP_BASE}/v1/sessions/sid-1/messages/batch").mock(return_value=httpx.Response(201, json=[]))

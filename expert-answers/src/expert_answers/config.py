@@ -10,6 +10,8 @@ class Settings(BaseSettings):
     expert_answers_adp_api_key: str = "change-me"
     expert_answers_runtime_url: str = "http://localhost:8001"
     expert_answers_runtime_api_key: str = "change-me"
+    expert_answers_trust_url: str = "http://localhost:8500"
+    expert_answers_trust_api_key: str = "change-me"
 
 
 @lru_cache

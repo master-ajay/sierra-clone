@@ -4,6 +4,8 @@ import pytest
 import respx
 from httpx import Response
 
+_TRUST_ALLOWED = {"allowed": True, "message_clean": "Hi!", "flags": [], "audit_id": "audit-1"}
+
 
 @pytest.fixture()
 def line(client, api_key):
@@ -62,6 +64,7 @@ def test_exchange_turn(client, api_key, line):
     call_id = start_resp.json()["call_id"]
 
     with respx.mock(assert_all_called=False) as mock:
+        mock.post("http://mock-trust/v1/check").mock(return_value=Response(200, json=_TRUST_ALLOWED))
         mock.post("http://mock-adp/v1/context").mock(return_value=Response(200, json={"messages": []}))
         mock.post("http://mock-runtime/query").mock(
             side_effect=[
@@ -93,6 +96,7 @@ def test_escalation_recommended_after_3_negative_turns(client, api_key, line):
 
     for i in range(3):
         with respx.mock(assert_all_called=False) as mock:
+            mock.post("http://mock-trust/v1/check").mock(return_value=Response(200, json={**_TRUST_ALLOWED, "message_clean": "I'm very angry!"}))
             mock.post("http://mock-adp/v1/context").mock(return_value=Response(200, json={"messages": []}))
             mock.post("http://mock-runtime/query").mock(
                 side_effect=[
@@ -183,6 +187,7 @@ def test_escalated_call_still_accepts_turns(client, api_key, line):
 
     # Exchange turn on escalated call
     with respx.mock(assert_all_called=False) as mock:
+        mock.post("http://mock-trust/v1/check").mock(return_value=Response(200, json={**_TRUST_ALLOWED, "message_clean": "still there?"}))
         mock.post("http://mock-adp/v1/context").mock(return_value=Response(200, json={"messages": []}))
         mock.post("http://mock-runtime/query").mock(
             side_effect=[

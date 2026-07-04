@@ -28,6 +28,7 @@ def test_full_call_lifecycle(client, api_key):
     # 3. Exchange 3 positive turns → escalation_recommended=False
     for i in range(3):
         with respx.mock(assert_all_called=False) as mock:
+            mock.post("http://mock-trust/v1/check").mock(return_value=Response(200, json={"allowed": True, "message_clean": "I love this!", "flags": [], "audit_id": "a"}))
             mock.post("http://mock-adp/v1/context").mock(return_value=Response(200, json={"messages": []}))
             mock.post("http://mock-runtime/query").mock(
                 side_effect=[
@@ -45,6 +46,7 @@ def test_full_call_lifecycle(client, api_key):
     # 4. Exchange 3 negative turns → escalation_recommended=True
     for i in range(3):
         with respx.mock(assert_all_called=False) as mock:
+            mock.post("http://mock-trust/v1/check").mock(return_value=Response(200, json={"allowed": True, "message_clean": "This is terrible!", "flags": [], "audit_id": "a"}))
             mock.post("http://mock-adp/v1/context").mock(return_value=Response(200, json={"messages": []}))
             mock.post("http://mock-runtime/query").mock(
                 side_effect=[
@@ -88,6 +90,7 @@ def test_full_call_lifecycle(client, api_key):
 
     # 7. Exchange one more turn (escalated call still accepts turns)
     with respx.mock(assert_all_called=False) as mock:
+        mock.post("http://mock-trust/v1/check").mock(return_value=Response(200, json={"allowed": True, "message_clean": "still there?", "flags": [], "audit_id": "a"}))
         mock.post("http://mock-adp/v1/context").mock(return_value=Response(200, json={"messages": []}))
         mock.post("http://mock-runtime/query").mock(
             side_effect=[

@@ -1,3 +1,5 @@
+import json
+
 import httpx
 import respx
 
@@ -8,6 +10,14 @@ RUNTIME_RESPONSE = {"answer": '{"title": "Warranty Policy", "body": "12 months s
 
 def _make_article(client, settings, topic=None):
     with respx.mock:
+        respx.post(f"{settings.expert_answers_trust_url}/v1/check").mock(
+            side_effect=lambda req: httpx.Response(200, json={
+                "allowed": True,
+                "message_clean": json.loads(req.content).get("message", ""),
+                "flags": [],
+                "audit_id": "test-audit",
+            })
+        )
         respx.post(f"{settings.expert_answers_runtime_url}/query").mock(return_value=httpx.Response(200, json=RUNTIME_RESPONSE))
         resp = client.post("/v1/resolutions", headers=H, json={
             "conversation_id": "conv-art",

@@ -3,6 +3,7 @@ import sqlite3
 from datetime import datetime, timezone
 
 import httpx
+from fastapi import HTTPException
 
 from channels.config import Settings
 from channels.models.channel import ChannelResponse
@@ -16,9 +17,32 @@ def _now() -> str:
 
 
 def send_message(conn: sqlite3.Connection, channel: ChannelResponse, message: str, session_id: str | None, settings: Settings) -> ChatResponse:
+    # 1. Trust & Reliability — check inbound message before doing any work
+    try:
+        trust_resp = httpx.post(
+            f"{settings.channels_trust_url}/v1/check",
+            json={"message": message, "channel_id": channel.channel_id, "direction": "inbound"},
+            headers={"X-API-Key": settings.channels_trust_api_key},
+        )
+        trust_resp.raise_for_status()
+    except httpx.HTTPStatusError as exc:
+        logger.error("trust_check_failed: channel_id=%s status=%d", channel.channel_id, exc.response.status_code)
+        raise
+    except httpx.RequestError as exc:
+        logger.error("trust_unreachable: channel_id=%s error=%s", channel.channel_id, exc)
+        raise
+    trust_result = trust_resp.json()
+    if not trust_result.get("allowed", True):
+        raise HTTPException(
+            status_code=403,
+            detail={"error": {"code": "message_blocked", "message": "Message blocked by Trust & Reliability guardrails", "details": {"flags": trust_result.get("flags", [])}}},
+        )
+    # Use the sanitized message (PII redacted) for all downstream calls
+    message_clean = trust_result.get("message_clean", message)
+
     adp_headers = {"X-API-Key": settings.channels_adp_api_key}
 
-    # 1. Open session if not provided
+    # 2. Open session if not provided
     if not session_id:
         try:
             resp = httpx.post(
@@ -36,7 +60,7 @@ def send_message(conn: sqlite3.Connection, channel: ChannelResponse, message: st
         session_id = resp.json()["session_id"]
         _increment_sessions(conn, channel.channel_id)
 
-    # 2. Fetch context from ADP
+    # 3. Fetch context from ADP
     try:
         ctx_resp = httpx.post(
             f"{settings.channels_adp_url}/v1/context",
@@ -52,14 +76,14 @@ def send_message(conn: sqlite3.Connection, channel: ChannelResponse, message: st
         raise
     context = ctx_resp.json()
 
-    # 3. Build history for Agent Runtime
+    # 4. Build history for Agent Runtime
     history = [{"role": m["role"], "content": m["content"]} for m in context.get("messages", [])]
 
-    # 4. Call Agent Runtime
+    # 5. Call Agent Runtime with sanitized message
     try:
         rt_resp = httpx.post(
             f"{settings.channels_runtime_url}/query",
-            json={"question": message, "history": history},
+            json={"question": message_clean, "history": history},
         )
         rt_resp.raise_for_status()
     except httpx.HTTPStatusError as exc:
@@ -73,12 +97,12 @@ def send_message(conn: sqlite3.Connection, channel: ChannelResponse, message: st
     citations = result.get("citations", [])
     trace = result.get("trace", {})
 
-    # 5. Persist both turns to ADP
+    # 6. Persist both turns to ADP (sanitized message stored, not raw)
     try:
         httpx.post(
             f"{settings.channels_adp_url}/v1/sessions/{session_id}/messages/batch",
             json=[
-                {"role": "user", "content": message},
+                {"role": "user", "content": message_clean},
                 {"role": "assistant", "content": reply, "metadata": {"citations": citations, "trace": trace}},
             ],
             headers=adp_headers,

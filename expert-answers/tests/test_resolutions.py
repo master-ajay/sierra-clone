@@ -1,9 +1,24 @@
+import json
+
 import httpx
 import respx
 
 H = {"X-API-Key": "test-key-123"}
 TRANSCRIPT = [{"role": "user", "content": "How do I return an item?"}, {"role": "assistant", "content": "You can return it within 30 days."}]
 RUNTIME_RESPONSE = {"answer": '{"title": "Return Policy", "body": "Items can be returned within 30 days.", "cited_excerpt": "How do I return an item?"}'}
+TRUST_BASE = "http://localhost:8500"
+
+
+def _mock_trust(settings):
+    """Register Trust /v1/check mock that returns allowed=True and echoes message_clean."""
+    respx.post(f"{settings.expert_answers_trust_url}/v1/check").mock(
+        side_effect=lambda req: httpx.Response(200, json={
+            "allowed": True,
+            "message_clean": json.loads(req.content).get("message", ""),
+            "flags": [],
+            "audit_id": "test-audit",
+        })
+    )
 
 
 def test_resolution_requires_api_key(client):
@@ -28,6 +43,7 @@ def test_resolution_requires_exactly_one_source(client):
 
 @respx.mock
 def test_resolution_with_transcript_creates_draft(client, settings):
+    _mock_trust(settings)
     respx.post(f"{settings.expert_answers_runtime_url}/query").mock(return_value=httpx.Response(200, json=RUNTIME_RESPONSE))
 
     resp = client.post("/v1/resolutions", headers=H, json={
@@ -49,6 +65,7 @@ def test_resolution_with_transcript_creates_draft(client, settings):
 def test_resolution_with_adp_session_fetches_transcript(client, settings):
     session_id = "adp-sess-1"
     adp_messages = {"items": [{"role": "user", "content": "Q?"}, {"role": "assistant", "content": "A."}]}
+    _mock_trust(settings)
     respx.get(f"{settings.expert_answers_adp_url}/v1/sessions/{session_id}/messages").mock(return_value=httpx.Response(200, json=adp_messages))
     respx.post(f"{settings.expert_answers_runtime_url}/query").mock(return_value=httpx.Response(200, json=RUNTIME_RESPONSE))
 
@@ -63,6 +80,7 @@ def test_resolution_with_adp_session_fetches_transcript(client, settings):
 
 @respx.mock
 def test_resolution_draft_failure_marks_draft_failed(client, settings):
+    _mock_trust(settings)
     respx.post(f"{settings.expert_answers_runtime_url}/query").mock(return_value=httpx.Response(500))
 
     resp = client.post("/v1/resolutions", headers=H, json={
@@ -79,11 +97,13 @@ def test_resolution_draft_failure_marks_draft_failed(client, settings):
 @respx.mock
 def test_retry_resolution(client, settings):
     # First: fail the draft
+    _mock_trust(settings)
     respx.post(f"{settings.expert_answers_runtime_url}/query").mock(return_value=httpx.Response(500))
     resp = client.post("/v1/resolutions", headers=H, json={"conversation_id": "c4", "transcript": TRANSCRIPT, "resolution_note": "note"})
     resolution_id = resp.json()["resolution"]["resolution_id"]
 
     # Now retry: succeed
+    _mock_trust(settings)
     respx.post(f"{settings.expert_answers_runtime_url}/query").mock(return_value=httpx.Response(200, json=RUNTIME_RESPONSE))
     resp = client.post(f"/v1/resolutions/{resolution_id}/retry", headers=H)
     assert resp.status_code == 200
@@ -94,6 +114,7 @@ def test_retry_resolution(client, settings):
 def test_retry_non_failed_resolution_returns_400(client, settings):
     # Create a successful resolution first
     with respx.mock:
+        _mock_trust(settings)
         respx.post(f"{settings.expert_answers_runtime_url}/query").mock(return_value=httpx.Response(200, json=RUNTIME_RESPONSE))
         resp = client.post("/v1/resolutions", headers=H, json={"conversation_id": "c5", "transcript": TRANSCRIPT, "resolution_note": "note"})
     resolution_id = resp.json()["resolution"]["resolution_id"]

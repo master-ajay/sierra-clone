@@ -4,6 +4,9 @@ import respx
 H = {"X-API-Key": "test-key-123"}
 ADP_BASE = "http://localhost:8100"
 RT_BASE = "http://localhost:8001"
+TRUST_BASE = "http://localhost:8500"
+
+_TRUST_ALLOWED = {"allowed": True, "message_clean": "Hi", "flags": [], "audit_id": "audit-1"}
 
 
 def _channel(client):
@@ -15,6 +18,7 @@ def test_stats_increment_on_chat(client):
     ch = _channel(client)
     cid, ckey, uid = ch["channel_id"], ch["channel_key"], ch["adp_user_id"]
 
+    respx.post(f"{TRUST_BASE}/v1/check").mock(return_value=httpx.Response(200, json=_TRUST_ALLOWED))
     respx.post(f"{ADP_BASE}/v1/users/{uid}/sessions").mock(return_value=httpx.Response(201, json={"session_id": "s1"}))
     respx.post(f"{ADP_BASE}/v1/context").mock(return_value=httpx.Response(200, json={"messages": [], "user": None, "session_summary": {}, "token_estimate": 0}))
     respx.post(f"{RT_BASE}/query").mock(return_value=httpx.Response(200, json={"answer": "Hi", "citations": [], "trace": {}}))
@@ -33,6 +37,7 @@ def test_stats_second_message_same_session(client):
     ch = _channel(client)
     cid, ckey, uid = ch["channel_id"], ch["channel_key"], ch["adp_user_id"]
 
+    respx.post(f"{TRUST_BASE}/v1/check").mock(return_value=httpx.Response(200, json=_TRUST_ALLOWED))
     respx.post(f"{ADP_BASE}/v1/users/{uid}/sessions").mock(return_value=httpx.Response(201, json={"session_id": "s1"}))
     respx.post(f"{ADP_BASE}/v1/context").mock(return_value=httpx.Response(200, json={"messages": [], "user": None, "session_summary": {}, "token_estimate": 0}))
     respx.post(f"{RT_BASE}/query").mock(return_value=httpx.Response(200, json={"answer": "Hi", "citations": [], "trace": {}}))

@@ -35,7 +35,12 @@ def mock_adp_user_registration():
 
 @pytest.fixture()
 def client(test_db: str) -> TestClient:
-    settings = Settings(channels_api_key=TEST_API_KEY, channels_db_path=test_db)
+    settings = Settings(
+        channels_api_key=TEST_API_KEY,
+        channels_db_path=test_db,
+        channels_trust_url="http://localhost:8500",
+        channels_trust_api_key="trust-key",
+    )
     app.dependency_overrides[get_settings] = lambda: settings
     with TestClient(app, raise_server_exceptions=False) as c:
         yield c

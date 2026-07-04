@@ -1,4 +1,6 @@
 """Full lifecycle: submit resolution → draft created → approve → publish → appears in /published."""
+import json
+
 import httpx
 import respx
 
@@ -13,8 +15,20 @@ _ANSWER = '{"title": "Delayed Order Resolution", "body": "Expedite shipping and 
 RUNTIME_RESPONSE = {"answer": _ANSWER}
 
 
+def _mock_trust(settings):
+    respx.post(f"{settings.expert_answers_trust_url}/v1/check").mock(
+        side_effect=lambda req: httpx.Response(200, json={
+            "allowed": True,
+            "message_clean": json.loads(req.content).get("message", ""),
+            "flags": [],
+            "audit_id": "test-audit",
+        })
+    )
+
+
 @respx.mock
 def test_full_lifecycle(client, settings):
+    _mock_trust(settings)
     respx.post(f"{settings.expert_answers_runtime_url}/query").mock(return_value=httpx.Response(200, json=RUNTIME_RESPONSE))
 
     # 1. Submit resolution
@@ -63,6 +77,7 @@ def test_full_lifecycle(client, settings):
     assert article["source_conversation_id"] == "conv-int-1"
 
     # 7. Rejected article is retained (not deleted)
+    _mock_trust(settings)
     respx.post(f"{settings.expert_answers_runtime_url}/query").mock(return_value=httpx.Response(200, json=RUNTIME_RESPONSE))
     resp2 = client.post("/v1/resolutions", headers=H, json={
         "conversation_id": "conv-int-2",

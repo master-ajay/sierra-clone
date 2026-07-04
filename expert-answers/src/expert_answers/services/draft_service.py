@@ -32,9 +32,32 @@ def _build_prompt(transcript: list[dict], resolution_note: str, prior_resolution
     )
 
 
+def _sanitize_transcript(transcript: list[dict], resolution_id: str, settings: Settings) -> list[dict]:
+    """Redact PII from each turn using Trust & Reliability before storing or sending to Agent Runtime."""
+    sanitized = []
+    for turn in transcript:
+        content = turn.get("content", "")
+        try:
+            trust_resp = httpx.post(
+                f"{settings.expert_answers_trust_url}/v1/check",
+                json={"message": content, "channel_id": resolution_id, "direction": "inbound"},
+                headers={"X-API-Key": settings.expert_answers_trust_api_key},
+            )
+            trust_resp.raise_for_status()
+            trust_data = trust_resp.json()
+            clean_content = trust_data.get("message_clean", content)
+        except (httpx.HTTPStatusError, httpx.RequestError) as exc:
+            logger.warning("trust_sanitize_failed: resolution_id=%s error=%s — using raw content", resolution_id, exc)
+            clean_content = content
+        sanitized.append({**turn, "content": clean_content})
+    return sanitized
+
+
 def generate_draft(conn: sqlite3.Connection, resolution_id: str, transcript: list[dict], resolution_note: str, topic: str | None, settings: Settings) -> ArticleResponse:
     prior = get_prior_resolutions(conn, topic, limit=3) if topic else []
-    prompt = _build_prompt(transcript, resolution_note, prior)
+    # Sanitize transcript PII before building prompt or storing
+    safe_transcript = _sanitize_transcript(transcript, resolution_id, settings)
+    prompt = _build_prompt(safe_transcript, resolution_note, prior)
 
     try:
         resp = httpx.post(
@@ -58,11 +81,11 @@ def generate_draft(conn: sqlite3.Connection, resolution_id: str, transcript: lis
         parsed = json.loads(answer)
         title = parsed.get("title", "Untitled")
         body = parsed.get("body", answer)
-        cited_excerpt = parsed.get("cited_excerpt", transcript[0]["content"] if transcript else "")
+        cited_excerpt = parsed.get("cited_excerpt", safe_transcript[0]["content"] if safe_transcript else "")
     except (json.JSONDecodeError, ValueError):
         logger.warning("draft_parse_fallback: runtime answer is not JSON, using raw text; resolution_id=%s", resolution_id)
         title = answer[:80] if answer else "Untitled"
         body = answer
-        cited_excerpt = transcript[0]["content"] if transcript else ""
+        cited_excerpt = safe_transcript[0]["content"] if safe_transcript else ""
 
     return create_article(conn, resolution_id, title, body, cited_excerpt, topic)

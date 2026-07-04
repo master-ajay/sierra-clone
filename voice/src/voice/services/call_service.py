@@ -93,6 +93,25 @@ def exchange_turn(conn: sqlite3.Connection, call_id: str, text: str, line_key: s
     session_id = call_row["session_id"]
     adp_headers = {"X-API-Key": settings.voice_adp_api_key}
 
+    # 1. Trust & Reliability — check inbound turn before processing
+    try:
+        trust_resp = httpx.post(
+            f"{settings.voice_trust_url}/v1/check",
+            json={"message": text, "channel_id": call_id, "direction": "inbound"},
+            headers={"X-API-Key": settings.voice_trust_api_key},
+        )
+        trust_resp.raise_for_status()
+    except httpx.HTTPStatusError as exc:
+        logger.error("trust_check_failed: call_id=%s status=%d", call_id, exc.response.status_code)
+        raise HTTPException(status_code=502, detail=_err("upstream_error", "Trust check failed"))
+    except httpx.RequestError as exc:
+        logger.error("trust_unreachable: call_id=%s error=%s", call_id, exc)
+        raise HTTPException(status_code=502, detail=_err("upstream_error", "Trust unreachable"))
+    trust_result = trust_resp.json()
+    if not trust_result.get("allowed", True):
+        raise HTTPException(status_code=403, detail=_err("message_blocked", "Turn blocked by Trust & Reliability guardrails"))
+    text_clean = trust_result.get("message_clean", text)
+
     # 2. Load context from ADP
     try:
         ctx_resp = httpx.post(
@@ -110,11 +129,11 @@ def exchange_turn(conn: sqlite3.Connection, call_id: str, text: str, line_key: s
     context = ctx_resp.json()
     history = [{"role": m["role"], "content": m["content"]} for m in context.get("messages", [])]
 
-    # 3. Call Agent Runtime for reply
+    # 3. Call Agent Runtime for reply (use sanitized text)
     try:
         rt_resp = httpx.post(
             f"{settings.voice_runtime_url}/query",
-            json={"question": text, "history": history},
+            json={"question": text_clean, "history": history},
         )
         rt_resp.raise_for_status()
     except httpx.HTTPStatusError as exc:
@@ -146,12 +165,12 @@ def exchange_turn(conn: sqlite3.Connection, call_id: str, text: str, line_key: s
         raise HTTPException(status_code=502, detail=_err("upstream_error", "Agent Runtime unreachable"))
     sentiment = score_sentiment(sent_resp.json())
 
-    # 5. Save turns to ADP
+    # 5. Save turns to ADP (persist sanitized text)
     try:
         httpx.post(
             f"{settings.voice_adp_url}/v1/sessions/{session_id}/messages/batch",
             json=[
-                {"role": "user", "content": text},
+                {"role": "user", "content": text_clean},
                 {"role": "assistant", "content": reply, "metadata": {"sentiment": sentiment}},
             ],
             headers=adp_headers,

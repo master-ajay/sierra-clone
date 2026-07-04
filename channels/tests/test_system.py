@@ -10,7 +10,7 @@ def test_health_returns_ok(client):
 def test_health_rejects_missing_key(client):
     res = client.get("/v1/health")
     assert res.status_code == 401
-    assert res.json()["detail"]["error"]["code"] == "unauthorized"
+    assert res.json()["error"]["code"] == "unauthorized"
 
 
 def test_health_rejects_wrong_key(client):
