@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import Link from 'next/link';
 import {
   AppShell,
   Badge,
@@ -76,7 +77,18 @@ export default function ChannelsListPage() {
   }
 
   const columns: TableColumn<Channel>[] = [
-    { key: 'name', header: 'Name' },
+    {
+      key: 'name',
+      header: 'Name',
+      render: (row) => (
+        <Link
+          href={`/channels/${row.channel_id}`}
+          className="font-medium text-brand-primary hover:underline"
+        >
+          {row.name}
+        </Link>
+      ),
+    },
     { key: 'type', header: 'Type' },
     {
       key: 'status',
