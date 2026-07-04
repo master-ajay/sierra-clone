@@ -13,13 +13,15 @@ quality bar, consistency standards). Read it once; apply it to every product.
 
 | Product | Dir | Port | Status | Spec | Plan |
 |---|---|---|---|---|---|
-| Agent Runtime | `agent-runtime/` | 8001 | Done | `specs/2026-07-04-agent-runtime-design.md` | `plans/2026-07-04-agent-runtime.md` |
+| Agent Runtime | `agent-runtime/` | 8001 | Done (action-taking addendum pending — see spec §Actions) | `specs/2026-07-04-agent-runtime-design.md` | `plans/2026-07-04-agent-runtime.md` |
 | Agent Studio | `app/` (repo root) | 3000 | Done | `specs/2026-07-03-agent-studio-design.md` | `plans/2026-07-03-agent-studio.md` |
 | Agent Data Platform | `agent-data-platform/` | 8100 | Done | `specs/2026-07-04-adp-design.md` | `plans/2026-07-04-adp.md` |
 | Channels | `channels/` | 8200 | Not started | `specs/2026-07-04-channels-design.md` | TBD |
 | Ghostwriter | `ghostwriter/` | 8300 | Not started | `specs/2026-07-04-ghostwriter-design.md` | TBD |
-| Explorer | `explorer/` | 8400 | Not started | `specs/2026-07-04-explorer-design.md` | TBD |
+| Insights (incl. Explorer) | `explorer/` | 8400 | Not started | `specs/2026-07-04-insights-design.md` + `specs/2026-07-04-explorer-design.md` | TBD |
 | Trust & Reliability | `trust/` | 8500 | Not started | `specs/2026-07-04-trust-design.md` | TBD |
+| Expert Answers | `expert-answers/` | 8600 | Not started | `specs/2026-07-04-expert-answers-design.md` | TBD |
+| Voice | `voice/` | 8700 | Not started | `specs/2026-07-04-voice-design.md` | TBD |
 
 All spec paths are relative to `docs/superpowers/`.
 

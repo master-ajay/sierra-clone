@@ -240,3 +240,52 @@ TOP_K_RETRIEVAL=5
 
 - Which faithfulness-scoring approach to standardize on long-term (LLM-as-judge vs. a dedicated NLI model) — start with LLM-as-judge for v1, revisit if it's too slow/expensive at scale.
 - Chunk size/overlap defaults may need tuning once we have a real knowledge base rather than the sample docs — don't over-optimize this in v1.
+
+---
+
+## 15. Addendum: Action-Taking (v1.1, not yet built)
+
+**Status: spec'd, not started.** Added when Expert Answers, Voice, and Trust &
+Reliability were brought into scope — those specs assume the Agent Runtime can call
+registered actions, not just answer questions.
+
+### Problem
+
+Every product built so far only lets an agent respond with text and citations. Sierra's
+real platform lets agents take actions — updating a CRM record, processing a return,
+collecting payment — against systems of record. Without this, Voice's payment-collection
+flow and any future "update the order" style capability have nowhere to attach.
+
+### Goals (v1.1)
+
+- Register a named "action" (a callable with a JSON schema for its arguments,
+  analogous to a single tool/function definition) with the Agent Runtime.
+- Let a query response include zero or more action calls the agent decided to make,
+  each with its arguments and a result (or error) after execution.
+- Route every action call through the Trust & Reliability guardrail
+  (`POST /v1/guardrails/check`) before it executes — no action call bypasses this,
+  regardless of caller (Channels, Voice, or direct API).
+- Record every action call (arguments, guardrail verdict, result) for audit, retrievable
+  by `session_id`.
+
+### Non-Goals (v1.1)
+
+- No built-in CRM/payment-processor connectors — v1.1 ships the action-calling
+  *mechanism*; each concrete action (e.g., "look up order") is registered by whichever
+  product needs it (Voice registers its payment-collection stub, for example), not
+  built into the Agent Runtime itself.
+- No user-facing UI for managing registered actions — registration is a backend/API
+  concern in v1.1.
+- No async/long-running actions — an action call must complete (or fail) within the
+  same request that triggered it.
+
+### Notes for implementation
+
+- This is additive to the existing `/query` endpoint: response gains an optional
+  `actions: [{ name, arguments, guardrail_verdict, result | error }]` field.
+- Guardrail check happens synchronously between the agent deciding to call an action
+  and the action actually executing — a blocked verdict prevents execution and is
+  surfaced in the response, not silently dropped.
+- This addendum needs its own milestone(s) and Gate 1 sign-off before implementation,
+  same as any other spec change — it is not pre-approved by virtue of being appended
+  here.
