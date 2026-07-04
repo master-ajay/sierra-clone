@@ -23,8 +23,9 @@ its own `dependencies`, since the root package.json *is* Agent Studio's.
 
 ## Status
 
-- [ ] M1: Tokens + Tailwind preset
-- [ ] M2: Workspace conversion (root package.json + existing 4 products wired in)
+- [x] M1: Tokens + Tailwind preset — verified `.bg-brand-primary` compiles to `#1B4332`
+- [x] M2: Workspace conversion — all 4 existing products build/lint/test clean; fixed a
+  pre-existing root tsconfig.json bug (unbounded include glob) found during verification
 - [ ] M3: Core components (Button, Card, Input, Select, Badge)
 - [ ] M4: AppShell + Table + EmptyState + MetricCard
 - [ ] M5: Modal + Toast (Radix-based)
