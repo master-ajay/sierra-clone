@@ -14,7 +14,10 @@ export async function fetchChannels(): Promise<Channel[]> {
   const res = await fetch(`${CHANNELS_URL}/v1/channels`, {
     headers: { 'X-API-Key': CHANNELS_KEY },
   })
-  if (!res.ok) return []
+  if (!res.ok) {
+    console.error('channels_fetch_failed', res.status)
+    return []
+  }
   const data = (await res.json()) as { items: Channel[] }
   return data.items ?? []
 }

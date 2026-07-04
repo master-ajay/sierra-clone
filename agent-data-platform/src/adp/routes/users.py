@@ -1,3 +1,4 @@
+import logging
 import sqlite3
 
 from fastapi import APIRouter, Depends, Query
@@ -16,6 +17,7 @@ from adp.services.user_service import (
     update_user,
 )
 
+logger = logging.getLogger(__name__)
 router = APIRouter(dependencies=[Depends(require_api_key)])
 
 
@@ -25,6 +27,7 @@ def create(body: UserCreate, settings: Settings = Depends(get_settings)):
     try:
         return create_user(conn, body)
     except sqlite3.IntegrityError:
+        logger.warning("user_create_conflict: external_id already exists")
         return error_response("conflict", "external_id already exists", 409)
 
 

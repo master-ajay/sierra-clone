@@ -21,6 +21,7 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
   const article = updateArticle(db, params.id, body)
   if (!article) return apiError('not_found', 'article not found', 404)
   const result = await ingestArticle(article.article_id, article.content)
+  if (!result.success) console.error('article_reindex_failed', article.article_id, result.error)
   return NextResponse.json(setArticleStatus(db, article.article_id, result.success ? 'indexed' : 'error', result.error ?? null))
 }
 

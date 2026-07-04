@@ -36,13 +36,20 @@ def generate_draft(conn: sqlite3.Connection, resolution_id: str, transcript: lis
     prior = get_prior_resolutions(conn, topic, limit=3) if topic else []
     prompt = _build_prompt(transcript, resolution_note, prior)
 
-    resp = httpx.post(
-        f"{settings.expert_answers_runtime_url}/query",
-        json={"question": prompt, "context_messages": []},
-        headers={"X-API-Key": settings.expert_answers_runtime_api_key},
-        timeout=30,
-    )
-    resp.raise_for_status()
+    try:
+        resp = httpx.post(
+            f"{settings.expert_answers_runtime_url}/query",
+            json={"question": prompt, "context_messages": []},
+            headers={"X-API-Key": settings.expert_answers_runtime_api_key},
+            timeout=30,
+        )
+        resp.raise_for_status()
+    except httpx.HTTPStatusError as exc:
+        logger.error("agent_runtime_query_failed: resolution_id=%s status=%d", resolution_id, exc.response.status_code)
+        raise
+    except httpx.RequestError as exc:
+        logger.error("agent_runtime_unreachable: resolution_id=%s error=%s", resolution_id, exc)
+        raise
     data = resp.json()
 
     # Agent Runtime returns {"answer": "...", ...}; answer may be JSON or plain text

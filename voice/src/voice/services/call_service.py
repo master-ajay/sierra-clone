@@ -1,4 +1,5 @@
 import json
+import logging
 import sqlite3
 import uuid
 from datetime import datetime, timezone
@@ -9,6 +10,8 @@ from fastapi import HTTPException
 from voice.config import Settings
 from voice.models.call import CallResponse, TurnResponse
 from voice.services.sentiment_service import score_sentiment
+
+logger = logging.getLogger(__name__)
 
 
 def _now() -> str:
@@ -43,12 +46,19 @@ def open_call(conn: sqlite3.Connection, line_id: str, line_key: str, settings: S
     adp_user_id = row["adp_user_id"]
     adp_headers = {"X-API-Key": settings.voice_adp_api_key}
 
-    resp = httpx.post(
-        f"{settings.voice_adp_url}/v1/users/{adp_user_id}/sessions",
-        json={},
-        headers=adp_headers,
-    )
-    resp.raise_for_status()
+    try:
+        resp = httpx.post(
+            f"{settings.voice_adp_url}/v1/users/{adp_user_id}/sessions",
+            json={},
+            headers=adp_headers,
+        )
+        resp.raise_for_status()
+    except httpx.HTTPStatusError as exc:
+        logger.error("adp_session_open_failed: line_id=%s status=%d", line_id, exc.response.status_code)
+        raise
+    except httpx.RequestError as exc:
+        logger.error("adp_unreachable: line_id=%s error=%s", line_id, exc)
+        raise
     session_id = resp.json()["session_id"]
 
     call_id = str(uuid.uuid4())
@@ -84,12 +94,19 @@ def exchange_turn(conn: sqlite3.Connection, call_id: str, text: str, line_key: s
     adp_headers = {"X-API-Key": settings.voice_adp_api_key}
 
     # 2. Load context from ADP
-    ctx_resp = httpx.post(
-        f"{settings.voice_adp_url}/v1/context",
-        json={"user_id": adp_user_id, "session_id": session_id},
-        headers=adp_headers,
-    )
-    ctx_resp.raise_for_status()
+    try:
+        ctx_resp = httpx.post(
+            f"{settings.voice_adp_url}/v1/context",
+            json={"user_id": adp_user_id, "session_id": session_id},
+            headers=adp_headers,
+        )
+        ctx_resp.raise_for_status()
+    except httpx.HTTPStatusError as exc:
+        logger.error("adp_context_fetch_failed: call_id=%s status=%d", call_id, exc.response.status_code)
+        raise HTTPException(status_code=502, detail=_err("upstream_error", "ADP context fetch failed"))
+    except httpx.RequestError as exc:
+        logger.error("adp_unreachable: call_id=%s error=%s", call_id, exc)
+        raise HTTPException(status_code=502, detail=_err("upstream_error", "ADP unreachable"))
     context = ctx_resp.json()
     history = [{"role": m["role"], "content": m["content"]} for m in context.get("messages", [])]
 
@@ -100,8 +117,12 @@ def exchange_turn(conn: sqlite3.Connection, call_id: str, text: str, line_key: s
             json={"question": text, "history": history},
         )
         rt_resp.raise_for_status()
-    except httpx.HTTPStatusError:
+    except httpx.HTTPStatusError as exc:
+        logger.error("agent_runtime_query_failed: call_id=%s status=%d", call_id, exc.response.status_code)
         raise HTTPException(status_code=502, detail=_err("upstream_error", "Agent Runtime error"))
+    except httpx.RequestError as exc:
+        logger.error("agent_runtime_unreachable: call_id=%s error=%s", call_id, exc)
+        raise HTTPException(status_code=502, detail=_err("upstream_error", "Agent Runtime unreachable"))
     result = rt_resp.json()
     reply = result.get("answer", "")
 
@@ -117,19 +138,30 @@ def exchange_turn(conn: sqlite3.Connection, call_id: str, text: str, line_key: s
             json={"question": sentiment_prompt, "history": []},
         )
         sent_resp.raise_for_status()
-    except httpx.HTTPStatusError:
+    except httpx.HTTPStatusError as exc:
+        logger.error("sentiment_scoring_failed: call_id=%s status=%d", call_id, exc.response.status_code)
         raise HTTPException(status_code=502, detail=_err("upstream_error", "Sentiment scoring error"))
+    except httpx.RequestError as exc:
+        logger.error("agent_runtime_unreachable: call_id=%s error=%s", call_id, exc)
+        raise HTTPException(status_code=502, detail=_err("upstream_error", "Agent Runtime unreachable"))
     sentiment = score_sentiment(sent_resp.json())
 
     # 5. Save turns to ADP
-    httpx.post(
-        f"{settings.voice_adp_url}/v1/sessions/{session_id}/messages/batch",
-        json=[
-            {"role": "user", "content": text},
-            {"role": "assistant", "content": reply, "metadata": {"sentiment": sentiment}},
-        ],
-        headers=adp_headers,
-    ).raise_for_status()
+    try:
+        httpx.post(
+            f"{settings.voice_adp_url}/v1/sessions/{session_id}/messages/batch",
+            json=[
+                {"role": "user", "content": text},
+                {"role": "assistant", "content": reply, "metadata": {"sentiment": sentiment}},
+            ],
+            headers=adp_headers,
+        ).raise_for_status()
+    except httpx.HTTPStatusError as exc:
+        logger.error("adp_batch_persist_failed: call_id=%s status=%d", call_id, exc.response.status_code)
+        raise HTTPException(status_code=502, detail=_err("upstream_error", "ADP persist failed"))
+    except httpx.RequestError as exc:
+        logger.error("adp_unreachable: call_id=%s error=%s", call_id, exc)
+        raise HTTPException(status_code=502, detail=_err("upstream_error", "ADP unreachable"))
 
     # 6. Update sentiment trend and recompute trailing 3-turn average
     trend: list[float] = json.loads(call_row["sentiment_trend_json"])
@@ -203,12 +235,19 @@ def escalate_call(conn: sqlite3.Connection, call_id: str, settings: Settings) ->
     adp_user_id = line_row["adp_user_id"] if line_row else ""
     adp_headers = {"X-API-Key": settings.voice_adp_api_key}
 
-    ctx_resp = httpx.post(
-        f"{settings.voice_adp_url}/v1/context",
-        json={"user_id": adp_user_id, "session_id": session_id},
-        headers=adp_headers,
-    )
-    ctx_resp.raise_for_status()
+    try:
+        ctx_resp = httpx.post(
+            f"{settings.voice_adp_url}/v1/context",
+            json={"user_id": adp_user_id, "session_id": session_id},
+            headers=adp_headers,
+        )
+        ctx_resp.raise_for_status()
+    except httpx.HTTPStatusError as exc:
+        logger.error("adp_context_fetch_failed: call_id=%s status=%d", call_id, exc.response.status_code)
+        raise HTTPException(status_code=502, detail=_err("upstream_error", "ADP context fetch failed"))
+    except httpx.RequestError as exc:
+        logger.error("adp_unreachable: call_id=%s error=%s", call_id, exc)
+        raise HTTPException(status_code=502, detail=_err("upstream_error", "ADP unreachable"))
     context = ctx_resp.json()
     turns = context.get("messages", [])
 
@@ -221,8 +260,12 @@ def escalate_call(conn: sqlite3.Connection, call_id: str, settings: Settings) ->
             json={"question": summary_prompt, "history": []},
         )
         rt_resp.raise_for_status()
-    except httpx.HTTPStatusError:
+    except httpx.HTTPStatusError as exc:
+        logger.error("summary_generation_failed: call_id=%s status=%d", call_id, exc.response.status_code)
         raise HTTPException(status_code=502, detail=_err("upstream_error", "Summary generation error"))
+    except httpx.RequestError as exc:
+        logger.error("agent_runtime_unreachable: call_id=%s error=%s", call_id, exc)
+        raise HTTPException(status_code=502, detail=_err("upstream_error", "Agent Runtime unreachable"))
 
     summary = rt_resp.json().get("answer", "")
 

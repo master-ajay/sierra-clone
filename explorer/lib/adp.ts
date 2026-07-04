@@ -43,21 +43,30 @@ export async function fetchUserSessions(userId: string, window?: string): Promis
   if (window) params.set('window', window)
   const qs = params.toString() ? `?${params}` : ''
   const res = await fetch(`${ADP_URL}/v1/users/${userId}/sessions${qs}`, { headers: adpHeaders() })
-  if (!res.ok) return []
+  if (!res.ok) {
+    console.error('adp_fetch_sessions_failed', res.status, userId)
+    return []
+  }
   const data = await res.json() as { items: AdpSession[] }
   return data.items ?? []
 }
 
 export async function fetchSessionMessages(sessionId: string): Promise<AdpMessage[]> {
   const res = await fetch(`${ADP_URL}/v1/sessions/${sessionId}/messages`, { headers: adpHeaders() })
-  if (!res.ok) return []
+  if (!res.ok) {
+    console.error('adp_fetch_messages_failed', res.status, sessionId)
+    return []
+  }
   const data = await res.json() as { items: AdpMessage[] }
   return data.items ?? []
 }
 
 export async function fetchSession(sessionId: string): Promise<AdpSession | null> {
   const res = await fetch(`${ADP_URL}/v1/sessions/${sessionId}`, { headers: adpHeaders() })
-  if (!res.ok) return null
+  if (!res.ok) {
+    console.error('adp_fetch_session_failed', res.status, sessionId)
+    return null
+  }
   return res.json() as Promise<AdpSession>
 }
 
@@ -65,7 +74,10 @@ export async function searchUserMessages(userId: string, q: string, window?: str
   const params = new URLSearchParams({ q })
   if (window) params.set('window', window)
   const res = await fetch(`${ADP_URL}/v1/users/${userId}/search?${params}`, { headers: adpHeaders() })
-  if (!res.ok) return []
+  if (!res.ok) {
+    console.error('adp_search_failed', res.status, userId)
+    return []
+  }
   const data = await res.json() as { items: AdpSearchResult[] }
   return data.items ?? []
 }

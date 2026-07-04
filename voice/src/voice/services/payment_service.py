@@ -1,3 +1,4 @@
+import logging
 import sqlite3
 import uuid
 from datetime import datetime, timezone
@@ -7,6 +8,8 @@ from fastapi import HTTPException
 
 from voice.config import Settings
 from voice.models.payment import PaymentRequest, PaymentResponse
+
+logger = logging.getLogger(__name__)
 
 
 def _now() -> str:
@@ -33,6 +36,7 @@ def record_payment(conn: sqlite3.Connection, call_id: str, req: PaymentRequest, 
         trust_data = trust_resp.json()
         allowed = trust_data.get("allowed", True)
     else:
+        logger.warning("trust_check_failed: call_id=%s status=%d defaulting to blocked", call_id, trust_resp.status_code)
         allowed = False
 
     status = "collected" if allowed else "blocked"

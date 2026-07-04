@@ -1,3 +1,5 @@
+import logging
+
 import httpx
 from fastapi import APIRouter, Depends, Request
 
@@ -8,6 +10,7 @@ from channels.models.chat import ChatRequest
 from channels.services.channel_service import get_channel_by_key
 from channels.services.chat_service import send_message
 
+logger = logging.getLogger(__name__)
 router = APIRouter()
 
 
@@ -25,6 +28,8 @@ def chat(channel_id: str, body: ChatRequest, request: Request, settings: Setting
     try:
         return send_message(conn, channel, body.message, body.session_id, settings)
     except httpx.HTTPStatusError as exc:
+        logger.error("chat_upstream_error: channel_id=%s status=%d", channel_id, exc.response.status_code)
         return error_response("upstream_error", f"upstream service error: {exc.response.status_code}", 502)
-    except httpx.RequestError:
+    except httpx.RequestError as exc:
+        logger.error("chat_upstream_unreachable: channel_id=%s error=%s", channel_id, exc)
         return error_response("upstream_error", "upstream service unreachable", 502)

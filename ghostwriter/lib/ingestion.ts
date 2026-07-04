@@ -13,10 +13,12 @@ export async function ingestArticle(article_id: string, content: string): Promis
     })
     if (!res.ok) {
       const body = await res.text()
+      console.error('ingest_failed', res.status, article_id, body)
       return { success: false, error: `Runtime returned ${res.status}: ${body}` }
     }
     return { success: true }
   } catch (err) {
+    console.error('ingest_error', article_id, err)
     return { success: false, error: String(err) }
   }
 }

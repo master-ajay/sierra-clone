@@ -12,6 +12,7 @@ export async function POST(req: NextRequest) {
   const db = getDb()
   const article = createArticle(db, body)
   const result = await ingestArticle(article.article_id, article.content)
+  if (!result.success) console.error('article_ingest_failed', article.article_id, result.error)
   const final = setArticleStatus(db, article.article_id, result.success ? 'indexed' : 'error', result.error ?? null)
   return NextResponse.json(final, { status: 201 })
 }
