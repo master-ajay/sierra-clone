@@ -5,7 +5,7 @@ import Link from "next/link";
 
 import { siGithub } from "simple-icons";
 
-import { AppSidebar } from "@/app/(main)/dashboard/_components/sidebar/app-sidebar";
+import { AppSidebar } from "@/app/(main)/_components/sidebar/app-sidebar";
 import { SimpleIcon } from "@/components/simple-icon";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
