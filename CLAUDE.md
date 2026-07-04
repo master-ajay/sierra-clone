@@ -44,7 +44,7 @@ cleared.** Product UI work can start.
 |---|---|---|---|---|---|
 | Design System | `design-system/` | n/a (library) | **Done** | `specs/2026-07-04-design-system-design.md` | `plans/2026-07-04-design-system.md` |
 | Agent Studio UI (rebuild) | `app/` | 3000 | **Done** | `specs/2026-07-04-agent-studio-ui-design.md` | `plans/2026-07-04-agent-studio-ui.md` |
-| Ghostwriter UI (rebuild) | `ghostwriter/` | 8300 | Not started | `specs/2026-07-04-ghostwriter-ui-design.md` | TBD |
+| Ghostwriter UI (rebuild) | `ghostwriter/` | 8300 | **Done** | `specs/2026-07-04-ghostwriter-ui-design.md` | `plans/2026-07-04-ghostwriter-ui.md` |
 | Insights/Explorer UI (rebuild) | `explorer/` | 8400 | In progress | `specs/2026-07-04-insights-explorer-ui-design.md` | `plans/2026-07-04-insights-explorer-ui.md` |
 | Trust & Reliability UI (rebuild) | `trust/ui/` | 8501 | Not started | `specs/2026-07-04-trust-ui-design.md` | TBD |
 | Channels UI (new) | `channels/ui/` | 8201 | **Done** | `specs/2026-07-04-channels-ui-design.md` | `plans/2026-07-04-channels-ui.md` |
