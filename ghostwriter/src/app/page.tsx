@@ -1,67 +1,77 @@
-import Link from 'next/link'
-import { getDb } from '../../lib/db'
-import { listArticles } from '../../lib/articles'
+import Link from 'next/link';
+import { AppShell, Badge, Button, EmptyState, MetricCard, Table, type BadgeStatus, type TableColumn } from 'design-system';
+import { getDb } from '../../lib/db';
+import { listArticles, type Article } from '../../lib/articles';
 
-function StatusBadge({ status }: { status: string }) {
-  const styles: Record<string, string> = {
-    indexed: 'bg-success/20 text-success',
-    pending: 'bg-warning/20 text-warning',
-    error: 'bg-danger/20 text-danger',
-  }
-  return (
-    <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${styles[status] ?? 'bg-gray-700 text-gray-300'}`}>
-      {status}
-    </span>
-  )
+const NAV = [
+  { label: 'Articles', href: '/', active: true },
+  { label: 'Search', href: '/search', active: false },
+  { label: 'New article', href: '/articles/new', active: false },
+];
+
+function statusToBadge(status: Article['status']): BadgeStatus {
+  if (status === 'indexed') return 'success';
+  if (status === 'pending') return 'warning';
+  return 'error';
 }
 
-export default function ArticleListPage() {
-  const db = getDb()
-  const { items } = listArticles(db, null, null, 50)
+export default function ArticlesHomePage() {
+  const db = getDb();
+  const total = (db.prepare('SELECT COUNT(*) as n FROM articles').get() as { n: number }).n;
+  const indexed = (
+    db.prepare("SELECT COUNT(*) as n FROM articles WHERE status='indexed'").get() as { n: number }
+  ).n;
+  const pending = (
+    db.prepare("SELECT COUNT(*) as n FROM articles WHERE status='pending'").get() as { n: number }
+  ).n;
+  const errorCount = (
+    db.prepare("SELECT COUNT(*) as n FROM articles WHERE status='error'").get() as { n: number }
+  ).n;
+  const { items } = listArticles(db, null, null, 50);
+
+  const columns: TableColumn<Article>[] = [
+    {
+      key: 'title',
+      header: 'Title',
+      render: (row) => (
+        <Link href={`/articles/${row.article_id}`} className="font-medium text-brand-primary hover:underline">
+          {row.title}
+        </Link>
+      ),
+    },
+    {
+      key: 'status',
+      header: 'Status',
+      render: (row) => <Badge status={statusToBadge(row.status)}>{row.status}</Badge>,
+    },
+    { key: 'word_count', header: 'Words' },
+  ];
 
   return (
-    <div>
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-xl font-semibold">Knowledge base</h1>
-        <Link
-          href="/articles/new"
-          className="text-sm bg-accent text-white px-4 py-2 rounded-md hover:bg-accent/80 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-base"
-        >
-          New article
+    <AppShell
+      productName="Ghostwriter"
+      nav={NAV}
+      title="Articles"
+      actions={
+        <Link href="/articles/new">
+          <Button>New article</Button>
         </Link>
+      }
+    >
+      <div className="mb-6 grid grid-cols-3 gap-4">
+        <MetricCard label="Total articles" value={total} />
+        <MetricCard label="Indexed" value={indexed} />
+        <MetricCard label="Pending / errors" value={`${pending} / ${errorCount}`} />
       </div>
 
       {items.length === 0 ? (
-        <p className="text-muted text-sm">No articles yet. Create your first article to get started.</p>
+        <EmptyState
+          heading="No articles yet"
+          body="Create your first knowledge base article using the button above to get started."
+        />
       ) : (
-        <table className="w-full text-sm border-collapse">
-          <thead>
-            <tr className="border-b border-border text-muted text-left">
-              <th className="pb-2 font-medium">Title</th>
-              <th className="pb-2 font-medium w-24">Status</th>
-              <th className="pb-2 font-medium w-20 text-right">Words</th>
-              <th className="pb-2 font-medium w-36 text-right">Updated</th>
-            </tr>
-          </thead>
-          <tbody>
-            {items.map(a => (
-              <tr key={a.article_id} className="border-b border-border/50 hover:bg-white/5">
-                <td className="py-3 pr-4">
-                  <Link href={`/articles/${a.article_id}`} className="hover:text-accent transition-colors">
-                    {a.title}
-                  </Link>
-                  {a.status === 'error' && a.error_detail && (
-                    <p className="text-xs text-danger mt-0.5 truncate max-w-xs">{a.error_detail}</p>
-                  )}
-                </td>
-                <td className="py-3 pr-4"><StatusBadge status={a.status} /></td>
-                <td className="py-3 text-right text-muted">{a.word_count}</td>
-                <td className="py-3 text-right text-muted">{new Date(a.updated_at).toLocaleDateString()}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+        <Table columns={columns} data={items} rowKey="article_id" emptyMessage="No articles yet" />
       )}
-    </div>
-  )
+    </AppShell>
+  );
 }

@@ -1,51 +1,66 @@
-'use client'
-import { useState } from 'react'
-import Link from 'next/link'
-import type { Article } from '../../../lib/articles'
+import Link from 'next/link';
+import { AppShell, Badge, Table, type BadgeStatus, type TableColumn } from 'design-system';
+import { getDb } from '../../../lib/db';
+import { searchArticles, type Article } from '../../../lib/articles';
 
-export default function SearchPage() {
-  const [q, setQ] = useState('')
-  const [results, setResults] = useState<Article[]>([])
-  const [searched, setSearched] = useState(false)
+const NAV = [
+  { label: 'Articles', href: '/', active: false },
+  { label: 'Search', href: '/search', active: true },
+  { label: 'New article', href: '/articles/new', active: false },
+];
 
-  async function handleSearch(e: React.FormEvent) {
-    e.preventDefault()
-    if (!q.trim()) return
-    const res = await fetch(`/api/articles/search?q=${encodeURIComponent(q)}`, { headers: { 'X-API-Key': '' } })
-    const data = await res.json()
-    setResults(data.items ?? [])
-    setSearched(true)
-  }
+function statusToBadge(status: Article['status']): BadgeStatus {
+  if (status === 'indexed') return 'success';
+  if (status === 'pending') return 'warning';
+  return 'error';
+}
+
+export default function SearchPage({
+  searchParams,
+}: {
+  searchParams: { q?: string };
+}) {
+  const q = searchParams.q ?? '';
+  const results = q ? searchArticles(getDb(), q, null, 50).items : [];
+
+  const columns: TableColumn<Article>[] = [
+    {
+      key: 'title',
+      header: 'Title',
+      render: (row) => (
+        <Link href={`/articles/${row.article_id}`} className="font-medium text-brand-primary hover:underline">
+          {row.title}
+        </Link>
+      ),
+    },
+    {
+      key: 'status',
+      header: 'Status',
+      render: (row) => <Badge status={statusToBadge(row.status)}>{row.status}</Badge>,
+    },
+  ];
 
   return (
-    <div className="max-w-2xl">
-      <h1 className="text-xl font-semibold mb-6">Search knowledge base</h1>
-      <form onSubmit={handleSearch} className="flex gap-2 mb-6">
+    <AppShell productName="Ghostwriter" nav={NAV} title="Search">
+      <form method="GET" className="mb-6 flex max-w-md gap-2">
         <input
-          value={q} onChange={e => setQ(e.target.value)} placeholder="Search articles…"
-          className="flex-1 bg-surface border border-border rounded-md px-3 py-2 text-sm text-gray-100 focus:outline-none focus:border-accent"
-          aria-label="Search query"
+          type="text"
+          name="q"
+          defaultValue={q}
+          placeholder="Search title or content…"
+          className="w-full rounded-md border border-border bg-bg-surface px-3 py-2 text-sm text-text-primary"
         />
         <button
           type="submit"
-          className="bg-accent text-white text-sm px-4 py-2 rounded-md hover:bg-accent/80 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-base"
+          className="rounded-md bg-brand-primary px-4 py-2 text-sm font-medium text-white hover:bg-brand-hover"
         >
           Search
         </button>
       </form>
-      {searched && results.length === 0 && (
-        <p className="text-muted text-sm">No articles match &ldquo;{q}&rdquo;.</p>
+
+      {q && (
+        <Table columns={columns} data={results} rowKey="article_id" emptyMessage="No matching articles" />
       )}
-      <ul className="flex flex-col gap-3">
-        {results.map(a => (
-          <li key={a.article_id} className="bg-surface border border-border rounded-md p-4">
-            <Link href={`/articles/${a.article_id}`} className="text-sm font-medium hover:text-accent transition-colors">
-              {a.title}
-            </Link>
-            <p className="text-xs text-muted mt-1 line-clamp-2">{a.content.slice(0, 200)}</p>
-          </li>
-        ))}
-      </ul>
-    </div>
-  )
+    </AppShell>
+  );
 }
