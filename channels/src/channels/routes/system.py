@@ -1,8 +1,12 @@
+import logging
+
 from fastapi import APIRouter, Depends
 
 from channels.auth import require_api_key
 from channels.config import Settings, get_settings
 from channels.database import get_connection
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(dependencies=[Depends(require_api_key)])
 
@@ -15,6 +19,7 @@ def health(settings: Settings = Depends(get_settings)) -> dict:
         conn.close()
         db_status = "connected"
     except Exception:
+        logger.exception("health_db_check_failed db=%s", settings.channels_db_path)
         db_status = "error"
     return {"status": "ok", "database": db_status}
 

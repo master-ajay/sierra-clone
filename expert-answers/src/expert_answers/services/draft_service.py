@@ -1,3 +1,5 @@
+import json
+import logging
 import sqlite3
 
 import httpx
@@ -6,6 +8,8 @@ from expert_answers.config import Settings
 from expert_answers.models.article import ArticleResponse
 from expert_answers.services.article_service import create_article
 from expert_answers.services.resolution_service import get_prior_resolutions
+
+logger = logging.getLogger(__name__)
 
 
 def _build_prompt(transcript: list[dict], resolution_note: str, prior_resolutions: list[dict]) -> str:
@@ -43,13 +47,13 @@ def generate_draft(conn: sqlite3.Connection, resolution_id: str, transcript: lis
 
     # Agent Runtime returns {"answer": "...", ...}; answer may be JSON or plain text
     answer = data.get("answer", "")
-    import json as _json
     try:
-        parsed = _json.loads(answer)
+        parsed = json.loads(answer)
         title = parsed.get("title", "Untitled")
         body = parsed.get("body", answer)
         cited_excerpt = parsed.get("cited_excerpt", transcript[0]["content"] if transcript else "")
-    except Exception:
+    except (json.JSONDecodeError, ValueError):
+        logger.warning("draft_parse_fallback: runtime answer is not JSON, using raw text; resolution_id=%s", resolution_id)
         title = answer[:80] if answer else "Untitled"
         body = answer
         cited_excerpt = transcript[0]["content"] if transcript else ""

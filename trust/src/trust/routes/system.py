@@ -1,9 +1,13 @@
+import logging
+
 from fastapi import APIRouter, Depends
 
 from trust.auth import require_api_key
 from trust.config import Settings, get_settings
 from trust.database import get_connection
 from trust.services.audit_service import get_stats
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(dependencies=[Depends(require_api_key)])
 
@@ -16,6 +20,7 @@ def health(settings: Settings = Depends(get_settings)) -> dict:
         conn.close()
         return {"status": "ok", "database": "connected"}
     except Exception:
+        logger.exception("health_db_check_failed db=%s", settings.trust_db_path)
         return {"status": "ok", "database": "error"}
 
 

@@ -9,7 +9,8 @@ export function GET(req: NextRequest) {
     const db = getDb()
     db.prepare('SELECT 1').get()
     return NextResponse.json({ status: 'ok', database: 'connected' })
-  } catch {
+  } catch (err) {
+    console.error('health_db_check_failed', err)
     return NextResponse.json({ status: 'ok', database: 'error' })
   }
 }

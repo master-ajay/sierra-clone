@@ -1,4 +1,5 @@
 import json
+import logging
 import os
 
 from fastapi import Depends, FastAPI, Request
@@ -8,11 +9,15 @@ from pydantic import BaseModel
 from agent_runtime.agent import Agent
 from agent_runtime.models import AgentResponse
 
+logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s %(message)s")
+logger = logging.getLogger(__name__)
+
 app = FastAPI(title="Agent Runtime")
 
 
 @app.exception_handler(RuntimeError)
 def runtime_error_handler(request: Request, exc: RuntimeError) -> JSONResponse:
+    logger.error("runtime_error path=%s error=%s", request.url.path, exc)
     return JSONResponse(
         status_code=500,
         content={"error": {"code": "runtime_error", "message": str(exc), "details": {}}},
