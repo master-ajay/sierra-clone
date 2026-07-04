@@ -4,23 +4,20 @@ interface SparklineChartProps {
 
 export function SparklineChart({ data }: SparklineChartProps) {
   if (data.length === 0) {
-    return <p className="text-muted text-sm">No data for this period.</p>
+    return <p className="text-sm text-text-muted">No data for this period.</p>
   }
 
-  const max = Math.max(...data.map(d => d.count), 1)
+  const max = Math.max(...data.map((d) => d.count), 1)
 
   return (
     <div className="space-y-1.5">
       {data.map(({ date, count }) => (
         <div key={date} className="flex items-center gap-3 text-sm">
-          <span className="text-muted w-24 shrink-0">{date}</span>
-          <div className="flex-1 bg-surface rounded-sm h-5 overflow-hidden border border-border">
-            <div
-              className="h-full bg-accent rounded-sm"
-              style={{ width: `${(count / max) * 100}%` }}
-            />
+          <span className="w-24 shrink-0 text-text-muted">{date}</span>
+          <div className="h-5 flex-1 overflow-hidden rounded-sm border border-border bg-bg-base">
+            <div className="h-full rounded-sm bg-brand-primary" style={{ width: `${(count / max) * 100}%` }} />
           </div>
-          <span className="text-white w-8 text-right">{count}</span>
+          <span className="w-8 text-right text-text-primary">{count}</span>
         </div>
       ))}
     </div>

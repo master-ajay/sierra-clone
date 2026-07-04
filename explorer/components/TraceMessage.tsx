@@ -1,5 +1,4 @@
-import { ConfidenceBadge } from './ConfidenceBadge'
-import { GuardrailBadge } from './GuardrailBadge'
+import { Badge } from 'design-system'
 
 interface MessageMetadata {
   citations?: string[]
@@ -15,43 +14,53 @@ interface TraceMessageProps {
   metadata: MessageMetadata
 }
 
+function confidenceStatus(score: number): { status: 'success' | 'warning' | 'error'; label: string } {
+  if (score >= 0.8) return { status: 'success', label: `High ${(score * 100).toFixed(0)}%` }
+  if (score >= 0.5) return { status: 'warning', label: `Medium ${(score * 100).toFixed(0)}%` }
+  return { status: 'error', label: `Low ${(score * 100).toFixed(0)}%` }
+}
+
 export function TraceMessage({ role, content, created_at, metadata }: TraceMessageProps) {
   const isAssistant = role === 'assistant'
   const isUser = role === 'user'
 
   return (
     <div
-      className={`rounded-lg p-4 border ${
+      className={`rounded-lg border p-4 ${
         isUser
-          ? 'bg-surface border-border ml-8'
+          ? 'ml-8 border-border bg-bg-surface'
           : isAssistant
-          ? 'bg-surface/60 border-accent/20 mr-8'
-          : 'bg-surface/30 border-border/50 text-muted text-sm italic'
+            ? 'mr-8 border-brand-primary/20 bg-bg-surface/60'
+            : 'border-border/50 bg-bg-surface/30 text-sm italic text-text-muted'
       }`}
     >
-      <div className="flex items-center justify-between mb-2 gap-2 flex-wrap">
+      <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
         <span
           className={`text-xs font-semibold uppercase tracking-widest ${
-            isUser ? 'text-accent' : isAssistant ? 'text-success' : 'text-muted'
+            isUser ? 'text-brand-primary' : isAssistant ? 'text-status-success' : 'text-text-muted'
           }`}
         >
           {role}
         </span>
-        <span className="text-xs text-muted">{new Date(created_at).toLocaleString()}</span>
+        <span className="text-xs text-text-muted">{new Date(created_at).toLocaleString()}</span>
       </div>
 
-      <p className="text-sm text-gray-100 whitespace-pre-wrap">{content}</p>
+      <p className="whitespace-pre-wrap text-sm text-text-primary">{content}</p>
 
       {isAssistant && (
-        <div className="mt-3 flex flex-wrap gap-2 items-start">
-          {typeof metadata.confidence_score === 'number' && (
-            <ConfidenceBadge score={metadata.confidence_score} />
-          )}
+        <div className="mt-3 flex flex-wrap items-start gap-2">
+          {typeof metadata.confidence_score === 'number' &&
+            (() => {
+              const { status, label } = confidenceStatus(metadata.confidence_score)
+              return <Badge status={status}>{label}</Badge>
+            })()}
           {typeof metadata.guardrail_passed === 'boolean' && (
-            <GuardrailBadge passed={metadata.guardrail_passed} />
+            <Badge status={metadata.guardrail_passed ? 'success' : 'error'}>
+              {metadata.guardrail_passed ? 'Guardrail passed' : 'Guardrail failed'}
+            </Badge>
           )}
           {metadata.action && (
-            <span className="text-xs px-2 py-0.5 rounded-full bg-surface border border-border text-muted">
+            <span className="rounded-full border border-border bg-bg-surface px-2 py-0.5 text-xs text-text-muted">
               action: {metadata.action}
             </span>
           )}
@@ -60,11 +69,13 @@ export function TraceMessage({ role, content, created_at, metadata }: TraceMessa
 
       {isAssistant && metadata.citations && metadata.citations.length > 0 && (
         <div className="mt-3">
-          <p className="text-xs font-semibold text-muted uppercase tracking-widest mb-1">Citations</p>
+          <p className="mb-1 text-xs font-semibold uppercase tracking-widest text-text-muted">Citations</p>
           <ul className="space-y-1">
             {metadata.citations.map((c, i) => (
-              <li key={i} className="text-xs text-accent hover:underline truncate">
-                <a href={c} target="_blank" rel="noopener noreferrer">{c}</a>
+              <li key={i} className="truncate text-xs text-brand-primary hover:underline">
+                <a href={c} target="_blank" rel="noopener noreferrer">
+                  {c}
+                </a>
               </li>
             ))}
           </ul>
