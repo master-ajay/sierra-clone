@@ -14,6 +14,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <NavLink href="/sessions">Sessions</NavLink>
           <NavLink href="/search">Search</NavLink>
           <NavLink href="/top-questions">Top Questions</NavLink>
+          <NavLink href="/insights">Insights</NavLink>
         </nav>
         <main className="flex-1 p-8 max-w-5xl">{children}</main>
       </body>
