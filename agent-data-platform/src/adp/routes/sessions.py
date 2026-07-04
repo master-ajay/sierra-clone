@@ -20,9 +20,12 @@ router = APIRouter(dependencies=[Depends(require_api_key)])
 @router.post("/v1/users/{user_id}/sessions", status_code=201)
 def create(user_id: str, body: SessionCreate, settings: Settings = Depends(get_settings)):
     conn = get_connection(settings.adp_db_path)
-    if not get_user(conn, user_id):
-        return error_response("not_found", "user not found", 404)
-    return create_session(conn, user_id, body)
+    try:
+        if not get_user(conn, user_id):
+            return error_response("not_found", "user not found", 404)
+        return create_session(conn, user_id, body)
+    finally:
+        conn.close()
 
 
 @router.get("/v1/users/{user_id}/sessions")
@@ -34,34 +37,46 @@ def list_all(
     settings: Settings = Depends(get_settings),
 ):
     conn = get_connection(settings.adp_db_path)
-    items, next_cursor = list_sessions(conn, user_id, status, cursor, limit)
-    return {"items": items, "next_cursor": next_cursor}
+    try:
+        items, next_cursor = list_sessions(conn, user_id, status, cursor, limit)
+        return {"items": items, "next_cursor": next_cursor}
+    finally:
+        conn.close()
 
 
 @router.get("/v1/sessions/{session_id}")
 def get_one(session_id: str, settings: Settings = Depends(get_settings)):
     conn = get_connection(settings.adp_db_path)
-    session = get_session(conn, session_id)
-    if not session:
-        return error_response("not_found", "session not found", 404)
-    return session
+    try:
+        session = get_session(conn, session_id)
+        if not session:
+            return error_response("not_found", "session not found", 404)
+        return session
+    finally:
+        conn.close()
 
 
 @router.patch("/v1/sessions/{session_id}")
 def update(session_id: str, body: SessionUpdate, settings: Settings = Depends(get_settings)):
     conn = get_connection(settings.adp_db_path)
-    session = update_session(conn, session_id, body)
-    if not session:
-        return error_response("not_found", "session not found", 404)
-    return session
+    try:
+        session = update_session(conn, session_id, body)
+        if not session:
+            return error_response("not_found", "session not found", 404)
+        return session
+    finally:
+        conn.close()
 
 
 @router.post("/v1/sessions/{session_id}/close")
 def close(session_id: str, settings: Settings = Depends(get_settings)):
     conn = get_connection(settings.adp_db_path)
-    session = get_session(conn, session_id)
-    if not session:
-        return error_response("not_found", "session not found", 404)
-    if session.status == "closed":
-        return error_response("conflict", "session is already closed", 409)
-    return close_session(conn, session_id)
+    try:
+        session = get_session(conn, session_id)
+        if not session:
+            return error_response("not_found", "session not found", 404)
+        if session.status == "closed":
+            return error_response("conflict", "session is already closed", 409)
+        return close_session(conn, session_id)
+    finally:
+        conn.close()

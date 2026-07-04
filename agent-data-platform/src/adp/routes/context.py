@@ -14,6 +14,9 @@ router = APIRouter(dependencies=[Depends(require_api_key)])
 @router.post("/v1/context")
 def get_context(body: ContextRequest, settings: Settings = Depends(get_settings)):
     conn = get_connection(settings.adp_db_path)
-    if not get_user(conn, body.user_id):
-        return error_response("not_found", "user not found", 404)
-    return assemble_context(conn, body, settings.adp_max_context_tokens)
+    try:
+        if not get_user(conn, body.user_id):
+            return error_response("not_found", "user not found", 404)
+        return assemble_context(conn, body, settings.adp_max_context_tokens)
+    finally:
+        conn.close()

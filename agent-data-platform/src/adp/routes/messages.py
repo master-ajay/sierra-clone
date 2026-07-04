@@ -14,23 +14,29 @@ router = APIRouter(dependencies=[Depends(require_api_key)])
 @router.post("/v1/sessions/{session_id}/messages", status_code=201)
 def append(session_id: str, body: MessageCreate, settings: Settings = Depends(get_settings)):
     conn = get_connection(settings.adp_db_path)
-    session = get_session(conn, session_id)
-    if not session:
-        return error_response("not_found", "session not found", 404)
-    if session.status == "closed":
-        return error_response("conflict", "cannot append to a closed session", 409)
-    return append_message(conn, session_id, body)
+    try:
+        session = get_session(conn, session_id)
+        if not session:
+            return error_response("not_found", "session not found", 404)
+        if session.status == "closed":
+            return error_response("conflict", "cannot append to a closed session", 409)
+        return append_message(conn, session_id, body)
+    finally:
+        conn.close()
 
 
 @router.post("/v1/sessions/{session_id}/messages/batch", status_code=201)
 def batch(session_id: str, body: list[MessageCreate], settings: Settings = Depends(get_settings)):
     conn = get_connection(settings.adp_db_path)
-    session = get_session(conn, session_id)
-    if not session:
-        return error_response("not_found", "session not found", 404)
-    if session.status == "closed":
-        return error_response("conflict", "cannot append to a closed session", 409)
-    return batch_append(conn, session_id, body)
+    try:
+        session = get_session(conn, session_id)
+        if not session:
+            return error_response("not_found", "session not found", 404)
+        if session.status == "closed":
+            return error_response("conflict", "cannot append to a closed session", 409)
+        return batch_append(conn, session_id, body)
+    finally:
+        conn.close()
 
 
 @router.get("/v1/sessions/{session_id}/messages")
@@ -41,5 +47,8 @@ def list_all(
     settings: Settings = Depends(get_settings),
 ):
     conn = get_connection(settings.adp_db_path)
-    items, next_cursor = list_messages(conn, session_id, cursor, limit)
-    return {"items": items, "next_cursor": next_cursor}
+    try:
+        items, next_cursor = list_messages(conn, session_id, cursor, limit)
+        return {"items": items, "next_cursor": next_cursor}
+    finally:
+        conn.close()

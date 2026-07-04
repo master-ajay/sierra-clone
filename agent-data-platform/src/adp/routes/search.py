@@ -17,5 +17,8 @@ def search(
     settings: Settings = Depends(get_settings),
 ):
     conn = get_connection(settings.adp_db_path)
-    items, next_cursor = search_messages(conn, user_id, q, cursor, limit)
-    return {"items": items, "next_cursor": next_cursor}
+    try:
+        items, next_cursor = search_messages(conn, user_id, q, cursor, limit)
+        return {"items": items, "next_cursor": next_cursor}
+    finally:
+        conn.close()
