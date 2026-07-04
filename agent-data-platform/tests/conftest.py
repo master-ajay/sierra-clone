@@ -1,11 +1,10 @@
 from pathlib import Path
 
 import pytest
-from fastapi.testclient import TestClient
-
 from adp.config import Settings, get_settings
 from adp.database import run_migrations
 from adp.main import app
+from fastapi.testclient import TestClient
 
 TEST_API_KEY = "test-key-123"
 
