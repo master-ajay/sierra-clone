@@ -1,9 +1,9 @@
 # Sierra Platform Build
 
 Sierra-inspired build: working software for what Sierra.ai's product suite
-does — not a clone of their marketing site. 7-area build (Agent Studio, ADP,
-Channels, Explorer, Ghostwriter, Insights, Trust & Reliability) on top of a
-shared Agent Runtime & SDK.
+does — not a clone of their marketing site. Full-platform build (Agent Studio,
+ADP, Channels, Explorer, Ghostwriter, Trust & Reliability, Expert Answers,
+Voice) on top of a shared Agent Runtime & SDK.
 
 **Cross-product process:** `docs/superpowers/DEVELOPMENT-PLAYBOOK.md` — the
 single source of truth for how every product gets built (pipeline, roles,
@@ -13,24 +13,26 @@ quality bar, consistency standards). Read it once; apply it to every product.
 
 | Product | Dir | Port | Status | Spec | Plan |
 |---|---|---|---|---|---|
-| Agent Runtime | `agent-runtime/` | 8001 | Done (action-taking addendum pending — see spec §Actions) | `specs/2026-07-04-agent-runtime-design.md` | `plans/2026-07-04-agent-runtime.md` |
+| Agent Runtime | `agent-runtime/` | 8001 | Done | `specs/2026-07-04-agent-runtime-design.md` | `plans/2026-07-04-agent-runtime.md` |
 | Agent Studio | `app/` (repo root) | 3000 | Done | `specs/2026-07-03-agent-studio-design.md` | `plans/2026-07-03-agent-studio.md` |
 | Agent Data Platform | `agent-data-platform/` | 8100 | Done | `specs/2026-07-04-adp-design.md` | `plans/2026-07-04-adp.md` |
-| Channels | `channels/` | 8200 | Not started | `specs/2026-07-04-channels-design.md` | TBD |
-| Ghostwriter | `ghostwriter/` | 8300 | Not started | `specs/2026-07-04-ghostwriter-design.md` | TBD |
-| Insights (incl. Explorer) | `explorer/` | 8400 | Not started | `specs/2026-07-04-insights-design.md` + `specs/2026-07-04-explorer-design.md` | TBD |
-| Trust & Reliability | `trust/` | 8500 | Not started | `specs/2026-07-04-trust-design.md` | TBD |
-| Expert Answers | `expert-answers/` | 8600 | Not started | `specs/2026-07-04-expert-answers-design.md` | TBD |
-| Voice | `voice/` | 8700 | Not started | `specs/2026-07-04-voice-design.md` | TBD |
+| Channels | `channels/` | 8200 | Done | `specs/2026-07-04-channels-design.md` | `plans/2026-07-04-channels.md` |
+| Ghostwriter | `ghostwriter/` | 8300 | Done | `specs/2026-07-04-ghostwriter-design.md` | `plans/2026-07-04-ghostwriter.md` |
+| Insights / Explorer | `explorer/` | 8400 | Done | `specs/2026-07-04-explorer-design.md` | `plans/2026-07-04-explorer.md` |
+| Trust & Reliability | `trust/` | 8500 | Done | `specs/2026-07-04-trust-design.md` | `plans/2026-07-04-trust.md` |
+| Expert Answers | `expert-answers/` | 8600 | **In progress — Agent B** | `specs/2026-07-04-expert-answers-design.md` | `plans/2026-07-04-expert-answers.md` |
+| Voice | `voice/` | 8700 | **In progress — Agent A** | `specs/2026-07-04-voice-design.md` | `plans/2026-07-04-voice.md` |
 
 All spec paths are relative to `docs/superpowers/`.
 
 **Conflict-prevention rules for parallel agents:**
-- Each agent owns exactly one product directory. Never write outside your product dir.
+- **Agent A owns `voice/` only.** Commit prefix: `[voice]`.
+- **Agent B owns `expert-answers/` only.** Commit prefix: `[expert-answers]`.
+- Each agent writes exclusively inside its assigned product directory.
 - Specs and plans in `docs/superpowers/` are read-only during a build.
 - `CLAUDE.md` is only edited between products, never mid-build.
-- Commit prefix: `[channels]`, `[ghostwriter]`, `[explorer]`, `[trust]`.
 - No cross-product imports — products communicate at runtime via HTTP only.
+- If a merge conflict occurs: the later commit wins; both products are independent.
 
 ## Stack
 
