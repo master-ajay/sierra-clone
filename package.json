@@ -9,7 +9,8 @@
     "trust/ui",
     "channels/ui",
     "expert-answers/ui",
-    "voice/ui"
+    "voice/ui",
+    "platform"
   ],
   "scripts": {
     "dev": "next dev",
