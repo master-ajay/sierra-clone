@@ -43,13 +43,13 @@ cleared.** Product UI work can start.
 | Sub-project | Dir | Port | Status | Spec | Plan |
 |---|---|---|---|---|---|
 | Design System | `design-system/` | n/a (library) | **Done** | `specs/2026-07-04-design-system-design.md` | `plans/2026-07-04-design-system.md` |
-| Agent Studio UI (rebuild) | `app/` | 3000 | Not started | `specs/2026-07-04-agent-studio-ui-design.md` | TBD |
+| Agent Studio UI (rebuild) | `app/` | 3000 | **Done** | `specs/2026-07-04-agent-studio-ui-design.md` | `plans/2026-07-04-agent-studio-ui.md` |
 | Ghostwriter UI (rebuild) | `ghostwriter/` | 8300 | Not started | `specs/2026-07-04-ghostwriter-ui-design.md` | TBD |
-| Insights/Explorer UI (rebuild) | `explorer/` | 8400 | Not started | `specs/2026-07-04-insights-explorer-ui-design.md` | TBD |
+| Insights/Explorer UI (rebuild) | `explorer/` | 8400 | In progress | `specs/2026-07-04-insights-explorer-ui-design.md` | `plans/2026-07-04-insights-explorer-ui.md` |
 | Trust & Reliability UI (rebuild) | `trust/ui/` | 8501 | Not started | `specs/2026-07-04-trust-ui-design.md` | TBD |
-| Channels UI (new) | `channels/ui/` | 8201 | Not started | `specs/2026-07-04-channels-ui-design.md` | TBD |
-| Expert Answers UI (new) | `expert-answers/ui/` | 8601 | Not started | `specs/2026-07-04-expert-answers-ui-design.md` | TBD |
-| Voice UI (new) | `voice/ui/` | 8701 | Not started | `specs/2026-07-04-voice-ui-design.md` | TBD |
+| Channels UI (new) | `channels/ui/` | 8201 | **Done** | `specs/2026-07-04-channels-ui-design.md` | `plans/2026-07-04-channels-ui.md` |
+| Expert Answers UI (new) | `expert-answers/ui/` | 8601 | **Done** | `specs/2026-07-04-expert-answers-ui-design.md` | `plans/2026-07-04-expert-answers-ui.md` |
+| Voice UI (new) | `voice/ui/` | 8701 | **Done** | `specs/2026-07-04-voice-ui-design.md` | `plans/2026-07-04-voice-ui.md` |
 
 **Suggested two-agent phase-2 split (once Design System is merged), balanced by
 effort rather than headcount — adjust freely:**
