@@ -1,0 +1,22 @@
+CREATE TABLE IF NOT EXISTS channels_channels (
+    channel_id   TEXT PRIMARY KEY,
+    agent_id     TEXT NOT NULL,
+    adp_user_id  TEXT NOT NULL,
+    name         TEXT NOT NULL,
+    type         TEXT NOT NULL CHECK(type IN ('widget', 'api')),
+    status       TEXT NOT NULL DEFAULT 'active' CHECK(status IN ('active', 'paused', 'revoked')),
+    channel_key  TEXT NOT NULL UNIQUE,
+    created_at   TEXT NOT NULL,
+    updated_at   TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS channels_channel_stats (
+    channel_id      TEXT PRIMARY KEY REFERENCES channels_channels(channel_id) ON DELETE CASCADE,
+    total_messages  INTEGER NOT NULL DEFAULT 0,
+    total_sessions  INTEGER NOT NULL DEFAULT 0,
+    last_active_at  TEXT
+);
+
+CREATE INDEX IF NOT EXISTS idx_channels_channels_agent_id ON channels_channels(agent_id);
+CREATE INDEX IF NOT EXISTS idx_channels_channels_status   ON channels_channels(status);
+CREATE INDEX IF NOT EXISTS idx_channels_channels_key      ON channels_channels(channel_key);
