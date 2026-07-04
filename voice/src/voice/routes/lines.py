@@ -14,7 +14,7 @@ router = APIRouter(dependencies=[Depends(require_api_key)])
 def create_line_route(data: LineCreate, settings: Settings = Depends(get_settings)):
     conn = get_connection(settings.voice_db_path)
     try:
-        line = create_line(conn, data)
+        line = create_line(conn, data, settings)
     finally:
         conn.close()
     return line.model_dump()

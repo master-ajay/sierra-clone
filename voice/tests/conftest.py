@@ -1,12 +1,26 @@
 from pathlib import Path
 
 import pytest
+import respx
 from fastapi.testclient import TestClient
+from httpx import Response
 from voice.config import Settings, get_settings
 from voice.database import run_migrations
 from voice.main import app
 
 TEST_API_KEY = "test-key-123"
+
+
+@pytest.fixture(autouse=True)
+def mock_adp_user_create():
+    """Mock ADP user creation so line tests don't need a live ADP service."""
+    import uuid
+
+    with respx.mock(assert_all_called=False) as mock:
+        mock.post("http://mock-adp/v1/users").mock(
+            side_effect=lambda req: Response(201, json={"user_id": str(uuid.uuid4()), "display_name": "mocked"})
+        )
+        yield mock
 
 
 @pytest.fixture()

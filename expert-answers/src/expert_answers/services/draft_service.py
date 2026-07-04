@@ -39,7 +39,7 @@ def generate_draft(conn: sqlite3.Connection, resolution_id: str, transcript: lis
     try:
         resp = httpx.post(
             f"{settings.expert_answers_runtime_url}/query",
-            json={"question": prompt, "context_messages": []},
+            json={"question": prompt, "context_messages": [], "mode": "generate"},
             headers={"X-API-Key": settings.expert_answers_runtime_api_key},
             timeout=30,
         )
@@ -52,8 +52,8 @@ def generate_draft(conn: sqlite3.Connection, resolution_id: str, transcript: lis
         raise
     data = resp.json()
 
-    # Agent Runtime returns {"answer": "...", ...}; answer may be JSON or plain text
-    answer = data.get("answer", "")
+    # Agent Runtime returns {"answer": "...", ...}; answer may be JSON, plain text, or None (escalate action)
+    answer = data.get("answer") or ""
     try:
         parsed = json.loads(answer)
         title = parsed.get("title", "Untitled")

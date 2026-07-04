@@ -19,7 +19,7 @@ def active_call(client, api_key):
 def test_payment_allowed(client, api_key, active_call):
     call_id = active_call["call_id"]
     with respx.mock(assert_all_called=False) as mock:
-        mock.post("http://mock-trust/v1/guardrails/check").mock(return_value=Response(200, json={"allowed": True}))
+        mock.post("http://mock-trust/v1/check").mock(return_value=Response(200, json={"allowed": True}))
         resp = client.post(
             f"/v1/calls/{call_id}/payment",
             json={"masked_card_last4": "4242", "amount": 99.99, "currency": "USD"},
@@ -34,7 +34,7 @@ def test_payment_allowed(client, api_key, active_call):
 def test_payment_blocked(client, api_key, active_call):
     call_id = active_call["call_id"]
     with respx.mock(assert_all_called=False) as mock:
-        mock.post("http://mock-trust/v1/guardrails/check").mock(return_value=Response(200, json={"allowed": False}))
+        mock.post("http://mock-trust/v1/check").mock(return_value=Response(200, json={"allowed": False}))
         resp = client.post(
             f"/v1/calls/{call_id}/payment",
             json={"masked_card_last4": "0000", "amount": 500.0, "currency": "USD"},

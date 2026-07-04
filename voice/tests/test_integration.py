@@ -77,7 +77,7 @@ def test_full_call_lifecycle(client, api_key):
 
     # 6. Attempt payment → collected (guardrail mock allows it)
     with respx.mock(assert_all_called=False) as mock:
-        mock.post("http://mock-trust/v1/guardrails/check").mock(return_value=Response(200, json={"allowed": True}))
+        mock.post("http://mock-trust/v1/check").mock(return_value=Response(200, json={"allowed": True}))
         pay_resp = client.post(
             f"/v1/calls/{call_id}/payment",
             json={"masked_card_last4": "4242", "amount": 49.99, "currency": "USD"},

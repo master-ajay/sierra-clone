@@ -23,7 +23,7 @@ def record_payment(conn: sqlite3.Connection, call_id: str, req: PaymentRequest, 
 
     # Check guardrail with Trust & Reliability
     trust_resp = httpx.post(
-        f"{settings.voice_trust_url}/v1/guardrails/check",
+        f"{settings.voice_trust_url}/v1/check",
         json={
             "message": f"payment {req.amount} {req.currency} card ...{req.masked_card_last4}",
             "channel_id": call_id,

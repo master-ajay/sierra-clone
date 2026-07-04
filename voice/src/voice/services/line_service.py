@@ -1,9 +1,15 @@
+import logging
 import secrets
 import sqlite3
 import uuid
 from datetime import datetime, timezone
 
+import httpx
+
+from voice.config import Settings
 from voice.models.line import LineCreate, LineResponse, LineUpdate
+
+logger = logging.getLogger(__name__)
 
 
 def _now() -> str:
@@ -23,9 +29,24 @@ def _row_to_line(row: sqlite3.Row) -> LineResponse:
     )
 
 
-def create_line(conn: sqlite3.Connection, data: LineCreate) -> LineResponse:
+def create_line(conn: sqlite3.Connection, data: LineCreate, settings: Settings) -> LineResponse:
     line_id = str(uuid.uuid4())
-    adp_user_id = str(uuid.uuid4())
+    # Register a real ADP user for this line's synthetic identity so that
+    # open_call can create sessions for it (identical pattern to Channels).
+    try:
+        adp_resp = httpx.post(
+            f"{settings.voice_adp_url}/v1/users",
+            json={"display_name": f"line:{data.name}"},
+            headers={"X-API-Key": settings.voice_adp_api_key},
+        )
+        adp_resp.raise_for_status()
+        adp_user_id = adp_resp.json()["user_id"]
+    except httpx.HTTPStatusError as exc:
+        logger.error("adp_user_create_failed: line_name=%s status=%d", data.name, exc.response.status_code)
+        raise
+    except httpx.RequestError as exc:
+        logger.error("adp_unreachable: line_name=%s error=%s", data.name, exc)
+        raise
     line_key = secrets.token_hex(32)  # 64 hex chars
     now = _now()
     conn.execute(
