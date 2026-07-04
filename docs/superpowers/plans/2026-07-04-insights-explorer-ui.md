@@ -23,9 +23,14 @@ redirect uses), rather than leaving two separate dashboard-shaped pages.
 
 ## Status
 
-- [ ] M1: Delete + scaffold (design-system dependency, Tailwind preset, keep
+- [x] M1: Delete + scaffold (design-system dependency, Tailwind preset, keep
   only SparklineChart + TraceMessage from old components/, empty AppShell)
-- [ ] M2: Sessions list + detail (Table, Badge, TraceMessage)
-- [ ] M3: Insights/trends (MetricCard row + SparklineChart, absorbing the old
+- [x] M2: Sessions list + detail (Table, Badge, TraceMessage)
+- [x] M3: Insights/trends (MetricCard row + SparklineChart, absorbing the old
   dashboard's job per the gap above; `/` redirects here)
-- [ ] M4: Search + top questions (Input/Table/Card)
+- [x] M4: Search + top questions (Input/Table/Card)
+
+All 4 milestones complete. 50/50 tests passing, lint clean, tsc --noEmit
+clean, build clean. Live-verified end-to-end against real ADP + Channels
+data for every page (sessions list/detail, insights snapshot + trends,
+search, top questions).
