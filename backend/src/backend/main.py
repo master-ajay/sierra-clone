@@ -1,8 +1,13 @@
+import os
+
+os.environ.setdefault("VECTOR_DB_PATH", "data/chroma")
+
 from contextlib import AsyncExitStack, asynccontextmanager
 
 from fastapi import FastAPI
 
 from adp.main import app as adp_app
+from agent_runtime.api import app as runtime_app
 from channels.main import app as channels_app
 from expert_answers.main import app as expert_answers_app
 from trust.main import app as trust_app
@@ -31,6 +36,7 @@ app.mount("/trust", trust_app)
 app.mount("/channels", channels_app)
 app.mount("/expert-answers", expert_answers_app)
 app.mount("/voice", voice_app)
+app.mount("/runtime", runtime_app)
 
 
 @app.get("/health")
