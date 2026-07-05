@@ -6,6 +6,7 @@ from adp.main import app as adp_app
 from channels.main import app as channels_app
 from expert_answers.main import app as expert_answers_app
 from trust.main import app as trust_app
+from voice.main import app as voice_app
 
 
 @asynccontextmanager
@@ -19,6 +20,7 @@ async def lifespan(app: FastAPI):
         await stack.enter_async_context(trust_app.router.lifespan_context(trust_app))
         await stack.enter_async_context(channels_app.router.lifespan_context(channels_app))
         await stack.enter_async_context(expert_answers_app.router.lifespan_context(expert_answers_app))
+        await stack.enter_async_context(voice_app.router.lifespan_context(voice_app))
         yield
 
 
@@ -28,6 +30,7 @@ app.mount("/adp", adp_app)
 app.mount("/trust", trust_app)
 app.mount("/channels", channels_app)
 app.mount("/expert-answers", expert_answers_app)
+app.mount("/voice", voice_app)
 
 
 @app.get("/health")
